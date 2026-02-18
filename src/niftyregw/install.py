@@ -65,5 +65,22 @@ def _which(program: str) -> Path | None:
     return Path(path) if path else None
 
 
+BINARIES = (
+    "reg_aladin",
+    "reg_average",
+    "reg_f3d",
+    "reg_jacobian",
+    "reg_measure",
+    "reg_resample",
+    "reg_tools",
+    "reg_transform",
+)
+
+
+def find(tool: str) -> Path | None:
+    """Find a NiftyReg binary by name (e.g. ``"reg_aladin"``)."""
+    return _which(tool)
+
+
 def aladin() -> Path | None:
-    return _which("reg_aladin")
+    return find("reg_aladin")

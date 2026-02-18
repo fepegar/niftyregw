@@ -1,4 +1,4 @@
-"""Python wrapper for NiftyReg's reg_aladin."""
+"""Python wrapper for NiftyReg binaries."""
 
 from __future__ import annotations
 
@@ -8,15 +8,53 @@ from subprocess import PIPE, Popen
 import loguru
 from loguru import logger
 
-from .install import aladin as _find_aladin
+from .install import find as _find
 
 
-def _get_aladin_path() -> Path:
-    path = _find_aladin()
+def _get_path(tool: str) -> Path:
+    path = _find(tool)
     if path is None:
-        msg = "reg_aladin not found. Please install NiftyReg first."
+        msg = f"{tool} not found. Please install NiftyReg first."
         raise FileNotFoundError(msg)
     return path
+
+
+def run(tool: str, *args: str, tool_logger: loguru.Logger | None = None) -> None:
+    """Run any NiftyReg binary with raw CLI arguments.
+
+    Args:
+        tool: Binary name (e.g. ``"reg_aladin"``).
+        *args: Raw CLI arguments.
+        tool_logger: Optional loguru logger for structured output.
+    """
+    tool_path = _get_path(tool)
+    args_list = [arg.strip("\\\n") for arg in args]
+    args_list = [arg for arg in args_list if arg]
+
+    cmd = [str(tool_path), *args_list]
+    with Popen(cmd, stdout=PIPE, stderr=PIPE, text=True, bufsize=1) as p:
+        assert p.stdout is not None
+        assert p.stderr is not None
+
+        for line in p.stderr:
+            line = line.rstrip("\n")
+            if tool_logger is None:
+                print(line)
+                continue
+            if line.startswith("[NiftyReg WARNING]"):
+                log = tool_logger.warning
+            elif line.startswith("[NiftyReg ERROR]"):
+                log = tool_logger.error
+            else:
+                log = tool_logger.info
+            log(line)
+
+        for line in p.stdout:
+            line = line.rstrip("\n")
+            if tool_logger is None:
+                print(line)
+            else:
+                tool_logger.info(line)
 
 
 def reg_aladin(
@@ -48,7 +86,7 @@ def reg_aladin(
     isotropic: bool = False,
     percent_blocks_to_use: int | None = None,
     percent_inliers: int | None = None,
-    speeeeed: bool = False,
+    block_step_size_2: bool = False,
     omp_threads: int | None = None,
     verbose_off: bool = False,
 ) -> None:
@@ -82,7 +120,7 @@ def reg_aladin(
         isotropic: Make images isotropic if required.
         percent_blocks_to_use: Percentage of blocks in optimisation.
         percent_inliers: Percentage of inlier blocks.
-        speeeeed: Go faster.
+        block_step_size_2: Use block step size of 2 for faster registration.
         omp_threads: Number of OpenMP threads.
         verbose_off: Turn verbose off.
     """
@@ -141,29 +179,29 @@ def reg_aladin(
         command_lines.append(f"  -pv {percent_blocks_to_use} \\")
     if percent_inliers is not None:
         command_lines.append(f"  -pi {percent_inliers} \\")
-    if speeeeed:
+    if block_step_size_2:
         command_lines.append("  -speeeeed \\")
     if omp_threads is not None:
         command_lines.append(f"  -omp {omp_threads} \\")
     if verbose_off:
         command_lines.append("  -voff \\")
 
-    _reg_aladin_with_logging(*command_lines)
+    _run_with_logging("reg_aladin", *command_lines)
 
 
-def _reg_aladin_with_logging(*lines: str) -> None:
-    aladin_path = _get_aladin_path()
+def _run_with_logging(tool: str, *lines: str) -> None:
+    tool_path = _get_path(tool)
     loggerw = logger.bind(executable="niftyregw")
-    loggerx = logger.bind(executable="reg_aladin")
+    loggerx = logger.bind(executable=tool)
 
     loggerw.debug("The following command will be run:")
     lines_str = "\n".join(lines).strip(" \\")
-    loggerw.debug(f"{aladin_path} \\\n  {lines_str}")
+    loggerw.debug(f"{tool_path} \\\n  {lines_str}")
     args = []
     for line in lines:
         args.extend(line.strip(" \\").split())
 
-    reg_aladin_raw(*args, logger=loggerx)
+    run(tool, *args, tool_logger=loggerx)
 
 
 def reg_aladin_raw(*args: str, logger: loguru.Logger | None = None) -> None:
@@ -173,32 +211,4 @@ def reg_aladin_raw(*args: str, logger: loguru.Logger | None = None) -> None:
         *args: Raw CLI arguments to pass to reg_aladin.
         logger: Optional loguru logger for structured output.
     """
-    aladin_path = _get_aladin_path()
-    args_list = [arg.strip("\\\n") for arg in args]
-    args_list = [arg for arg in args_list if arg]
-
-    cmd = [str(aladin_path), *args_list]
-    with Popen(cmd, stdout=PIPE, stderr=PIPE, text=True, bufsize=1) as p:
-        assert p.stdout is not None
-        assert p.stderr is not None
-
-        for line in p.stderr:
-            line = line.rstrip("\n")
-            if logger is None:
-                print(line)
-                continue
-            # reg_aladin prefixes lines with "[NiftyReg LEVEL]"
-            if line.startswith("[NiftyReg WARNING]"):
-                log = logger.warning
-            elif line.startswith("[NiftyReg ERROR]"):
-                log = logger.error
-            else:
-                log = logger.info
-            log(line)
-
-        for line in p.stdout:
-            line = line.rstrip("\n")
-            if logger is None:
-                print(line)
-            else:
-                logger.info(line)
+    run("reg_aladin", *args, tool_logger=logger)

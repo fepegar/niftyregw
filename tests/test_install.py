@@ -14,8 +14,8 @@ import requests
 from niftyregw import install
 
 
-def test_is_cuda_available_true():
-    """Test _is_cuda_available when nvidia-smi is available."""
+def testis_cuda_available_true():
+    """Test is_cuda_available when nvidia-smi is available."""
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = Mock(returncode=0)
         assert install._is_cuda_available() is True
@@ -24,88 +24,88 @@ def test_is_cuda_available_true():
         )
 
 
-def test_is_cuda_available_false():
-    """Test _is_cuda_available when nvidia-smi returns non-zero."""
+def testis_cuda_available_false():
+    """Test is_cuda_available when nvidia-smi returns non-zero."""
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = Mock(returncode=1)
         assert install._is_cuda_available() is False
 
 
-def test_is_cuda_available_not_found():
-    """Test _is_cuda_available when nvidia-smi is not found."""
+def testis_cuda_available_not_found():
+    """Test is_cuda_available when nvidia-smi is not found."""
     with patch("subprocess.run", side_effect=FileNotFoundError):
         assert install._is_cuda_available() is False
 
 
-def test_get_platform_linux_no_cuda():
-    """Test _get_platform for Linux without CUDA."""
+def testget_platform_linux_no_cuda():
+    """Test get_platform for Linux without CUDA."""
     with (
         patch("platform.system", return_value="Linux"),
-        patch.object(install, "_is_cuda_available", return_value=False),
+        patch.object(install, "is_cuda_available", return_value=False),
     ):
-        assert install._get_platform() == "Ubuntu"
+        assert install.get_platform() == "Ubuntu"
 
 
-def test_get_platform_linux_with_cuda():
-    """Test _get_platform for Linux with CUDA."""
+def testget_platform_linux_with_cuda():
+    """Test get_platform for Linux with CUDA."""
     with (
         patch("platform.system", return_value="Linux"),
-        patch.object(install, "_is_cuda_available", return_value=True),
+        patch.object(install, "is_cuda_available", return_value=True),
     ):
-        assert install._get_platform() == "Ubuntu-CUDA"
+        assert install.get_platform() == "Ubuntu-CUDA"
 
 
-def test_get_platform_macos_intel():
-    """Test _get_platform for macOS on Intel."""
+def testget_platform_macos_intel():
+    """Test get_platform for macOS on Intel."""
     with (
         patch("platform.system", return_value="Darwin"),
         patch("platform.processor", return_value="i386"),
-        patch.object(install, "_is_cuda_available", return_value=False),
+        patch.object(install, "is_cuda_available", return_value=False),
     ):
-        assert install._get_platform() == "macOS-Intel"
+        assert install.get_platform() == "macOS-Intel"
 
 
-def test_get_platform_macos_arm():
-    """Test _get_platform for macOS on ARM."""
+def testget_platform_macos_arm():
+    """Test get_platform for macOS on ARM."""
     with (
         patch("platform.system", return_value="Darwin"),
         patch("platform.processor", return_value="arm"),
-        patch.object(install, "_is_cuda_available", return_value=False),
+        patch.object(install, "is_cuda_available", return_value=False),
     ):
-        assert install._get_platform() == "macOS"
+        assert install.get_platform() == "macOS"
 
 
-def test_get_platform_windows_no_cuda():
-    """Test _get_platform for Windows without CUDA."""
+def testget_platform_windows_no_cuda():
+    """Test get_platform for Windows without CUDA."""
     with (
         patch("platform.system", return_value="Windows"),
-        patch.object(install, "_is_cuda_available", return_value=False),
+        patch.object(install, "is_cuda_available", return_value=False),
     ):
-        assert install._get_platform() == "Windows"
+        assert install.get_platform() == "Windows"
 
 
-def test_get_platform_windows_with_cuda():
-    """Test _get_platform for Windows with CUDA."""
+def testget_platform_windows_with_cuda():
+    """Test get_platform for Windows with CUDA."""
     with (
         patch("platform.system", return_value="Windows"),
-        patch.object(install, "_is_cuda_available", return_value=True),
+        patch.object(install, "is_cuda_available", return_value=True),
     ):
-        assert install._get_platform() == "Windows-CUDA"
+        assert install.get_platform() == "Windows-CUDA"
 
 
-def test_get_platform_unsupported():
-    """Test _get_platform for unsupported platform."""
+def testget_platform_unsupported():
+    """Test get_platform for unsupported platform."""
     with (
         patch("platform.system", return_value="FreeBSD"),
-        patch.object(install, "_is_cuda_available", return_value=False),
+        patch.object(install, "is_cuda_available", return_value=False),
     ):
         with pytest.raises(Exception, match="Unsupported platform: FreeBSD"):
-            install._get_platform()
+            install.get_platform()
 
 
-def test_get_download_url():
-    """Test _get_download_url returns correct URL."""
-    with patch.object(install, "_get_platform", return_value="Ubuntu"):
+def testget_download_url():
+    """Test get_download_url returns correct URL."""
+    with patch.object(install, "get_platform", return_value="Ubuntu"):
         url = install._get_download_url()
         assert (
             url
@@ -155,15 +155,15 @@ def test_download_niftyreg_failure():
             install.download_niftyreg()
 
 
-def test_which_found():
-    """Test _which when program is found."""
+def testwhich_found():
+    """Test which when program is found."""
     with patch("shutil.which", return_value="/usr/bin/test"):
         result = install._which("test")
         assert result == Path("/usr/bin/test")
 
 
-def test_which_not_found():
-    """Test _which when program is not found."""
+def testwhich_not_found():
+    """Test which when program is not found."""
     with patch("shutil.which", return_value=None):
         result = install._which("nonexistent")
         assert result is None

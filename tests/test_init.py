@@ -17,6 +17,7 @@ def test_package_name():
 def test_exported_functions():
     """Test that expected functions are exported."""
     assert hasattr(niftyregw, "download_niftyreg")
+    assert hasattr(niftyregw, "get_platform")
     assert hasattr(niftyregw, "reg_aladin")
     assert hasattr(niftyregw, "run")
 
@@ -24,13 +25,15 @@ def test_exported_functions():
 def test_all_exports():
     """Test __all__ contains expected exports."""
     assert "download_niftyreg" in niftyregw.__all__
+    assert "get_platform" in niftyregw.__all__
     assert "reg_aladin" in niftyregw.__all__
     assert "run" in niftyregw.__all__
-    assert len(niftyregw.__all__) == 3
+    assert len(niftyregw.__all__) == 4
 
 
 def test_callable_exports():
     """Test that exported items are callable."""
     assert callable(niftyregw.download_niftyreg)
+    assert callable(niftyregw.get_platform)
     assert callable(niftyregw.reg_aladin)
     assert callable(niftyregw.run)

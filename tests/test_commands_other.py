@@ -53,10 +53,11 @@ def test_measure_all_metrics(mock_nifti_image, temp_dir):
         assert result.exit_code == 0
         call_args = mock_run.call_args[0]
         args_str = " ".join(str(a) for a in call_args)
-        assert "--ncc" in args_str
-        assert "--lncc" in args_str
-        assert "--nmi" in args_str
-        assert "--ssd" in args_str
+        # Command uses short flag names, not long ones
+        assert "-ncc" in args_str
+        assert "-lncc" in args_str
+        assert "-nmi" in args_str
+        assert "-ssd" in args_str
 
 
 def test_measure_with_output(mock_nifti_image, temp_dir):

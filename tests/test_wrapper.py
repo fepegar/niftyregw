@@ -28,16 +28,16 @@ def test_get_path_not_found():
 def test_run_basic(temp_dir):
     """Test basic run function without logger."""
     tool_path = temp_dir / "reg_aladin"
-    tool_path.touch()
-    tool_path.chmod(0o755)
 
     mock_process = Mock()
     mock_process.stdout = iter(["output line 1\n", "output line 2\n"])
     mock_process.stderr = iter(["[NiftyReg] Starting\n"])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
 
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
-        patch("subprocess.Popen", return_value=mock_process),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
         patch("builtins.print") as mock_print,
     ):
         wrapper.run("reg_aladin", "-ref", "ref.nii")
@@ -47,18 +47,18 @@ def test_run_basic(temp_dir):
 def test_run_with_logger(temp_dir):
     """Test run function with logger."""
     tool_path = temp_dir / "reg_aladin"
-    tool_path.touch()
-    tool_path.chmod(0o755)
 
     mock_process = Mock()
     mock_process.stdout = iter(["output line\n"])
     mock_process.stderr = iter(["[NiftyReg WARNING] warning message\n"])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
 
     test_logger = logger.bind(executable="test")
 
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
-        patch("subprocess.Popen", return_value=mock_process),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
         patch.object(test_logger, "warning") as mock_warning,
     ):
         wrapper.run("reg_aladin", "-ref", "ref.nii", tool_logger=test_logger)
@@ -72,10 +72,12 @@ def test_run_strips_backslashes_and_newlines():
     mock_process = Mock()
     mock_process.stdout = iter([])
     mock_process.stderr = iter([])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
 
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
-        patch("subprocess.Popen", return_value=mock_process) as mock_popen,
+        patch("niftyregw.wrapper.Popen", return_value=mock_process) as mock_popen,
     ):
         wrapper.run("reg_aladin", "-ref\\\n", "ref.nii\\\n")
         # Check that backslashes and newlines were stripped
@@ -93,10 +95,12 @@ def test_run_filters_empty_args():
     mock_process = Mock()
     mock_process.stdout = iter([])
     mock_process.stderr = iter([])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
 
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
-        patch("subprocess.Popen", return_value=mock_process) as mock_popen,
+        patch("niftyregw.wrapper.Popen", return_value=mock_process) as mock_popen,
     ):
         wrapper.run("reg_aladin", "-ref", "", "ref.nii")
         call_args = mock_popen.call_args[0][0]
@@ -108,17 +112,18 @@ def test_run_filters_empty_args():
 def test_run_handles_error_messages(temp_dir):
     """Test run handles [NiftyReg ERROR] messages."""
     tool_path = temp_dir / "reg_aladin"
-    tool_path.touch()
 
     mock_process = Mock()
     mock_process.stdout = iter([])
     mock_process.stderr = iter(["[NiftyReg ERROR] error message\n"])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
 
     test_logger = logger.bind(executable="test")
 
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
-        patch("subprocess.Popen", return_value=mock_process),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
         patch.object(test_logger, "error") as mock_error,
     ):
         wrapper.run("reg_aladin", tool_logger=test_logger)
@@ -128,17 +133,18 @@ def test_run_handles_error_messages(temp_dir):
 def test_run_handles_info_messages(temp_dir):
     """Test run handles regular info messages."""
     tool_path = temp_dir / "reg_aladin"
-    tool_path.touch()
 
     mock_process = Mock()
     mock_process.stdout = iter([])
     mock_process.stderr = iter(["Regular info message\n"])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
 
     test_logger = logger.bind(executable="test")
 
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
-        patch("subprocess.Popen", return_value=mock_process),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
         patch.object(test_logger, "info") as mock_info,
     ):
         wrapper.run("reg_aladin", tool_logger=test_logger)

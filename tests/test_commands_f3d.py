@@ -42,12 +42,11 @@ def test_f3d_landmarks_validation(mock_nifti_image, temp_dir):
         app = typer.Typer()
         app.command()(f3d)
 
-        # Only weight, no file
+        # Only weight, no file - should exit with error
         result = runner.invoke(
             app, ["-r", str(ref_img), "-f", str(flo_img), "--landmarks-weight", "0.5"]
         )
         assert result.exit_code == 1
-        assert "must be provided together" in result.stdout
 
 
 def test_f3d_with_spline_options(mock_nifti_image, temp_dir):

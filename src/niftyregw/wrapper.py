@@ -202,13 +202,3 @@ def _run_with_logging(tool: str, *lines: str) -> None:
         args.extend(line.strip(" \\").split())
 
     run(tool, *args, tool_logger=loggerx)
-
-
-def reg_aladin_raw(*args: str, logger: loguru.Logger | None = None) -> None:
-    """Run reg_aladin with raw CLI arguments.
-
-    Args:
-        *args: Raw CLI arguments to pass to reg_aladin.
-        logger: Optional loguru logger for structured output.
-    """
-    run("reg_aladin", *args, tool_logger=logger)

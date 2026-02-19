@@ -12,6 +12,9 @@ from loguru import logger
 
 from .install import find as _find
 
+# Matrix formatting constants
+_MATRIX_COLUMN_COUNT = 4
+
 
 def _format_matrix_line(line: str) -> str:
     """Format a line that looks like a transformation matrix row.
@@ -28,7 +31,7 @@ def _format_matrix_line(line: str) -> str:
     parts = line.split()
     
     # Check if this line has exactly 4 parts that are all numbers
-    if len(parts) != 4:
+    if len(parts) != _MATRIX_COLUMN_COUNT:
         return line
     
     try:

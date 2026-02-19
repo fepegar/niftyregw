@@ -410,10 +410,16 @@ def test_format_matrix_line_large_numbers():
     """Test matrix line formatting with numbers >= 10 and >= 100."""
     line = "10.5 20.123 -15.678 100.234"
     result = wrapper._format_matrix_line(line)
+    # Verify trailing zeros are preserved
     assert "10.500" in result
     assert "20.123" in result
     assert "-15.678" in result
     assert "100.234" in result
+    # Verify proper alignment with leading space
+    assert result.startswith(" ")
+    # Verify all values are present as separate tokens
+    parts = result.split()
+    assert len(parts) == 4
 
 
 def test_format_matrix_line_integer_large_numbers():

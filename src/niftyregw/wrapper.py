@@ -38,16 +38,26 @@ def _read_stream(
         if tool_logger is None:
             logger.info(line)
             continue
+
+        # Determine log level and strip NiftyReg prefix
+        message = line
         if is_stderr:
             if line.startswith("[NiftyReg WARNING]"):
                 log = tool_logger.warning
+                message = line[len("[NiftyReg WARNING]") :].lstrip()
             elif line.startswith("[NiftyReg ERROR]"):
                 log = tool_logger.error
+                message = line[len("[NiftyReg ERROR]") :].lstrip()
             else:
                 log = tool_logger.info
         else:
             log = tool_logger.info
-        log(line)
+
+        # Strip [NiftyReg INFO] prefix from stdout and remaining stderr lines
+        if message.startswith("[NiftyReg INFO]"):
+            message = message[len("[NiftyReg INFO]") :].lstrip()
+
+        log(message)
 
 
 def run(tool: str, *args: str, tool_logger: loguru.Logger | None = None) -> None:

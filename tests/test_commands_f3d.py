@@ -251,3 +251,91 @@ def test_f3d_with_optimisation_params(mock_nifti_image, temp_dir):
         assert "-ln 4" in args_str
         assert "-nopy" in args_str
         assert "-noConj" in args_str
+
+
+def test_f3d_cleanup_default_file(mock_nifti_image, temp_dir):
+    """Test f3d cleans up default output file when not requested."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    # Simulate creating the default file during registration
+    def create_default_file(*args, **kwargs):
+        (Path.cwd() / "outputCPP.nii").touch()
+
+    with (
+        patch("niftyregw.commands.f3d.setup_logger"),
+        patch("niftyregw.commands.f3d.run", side_effect=create_default_file),
+    ):
+        # Ensure default file doesn't exist before
+        default_file = Path.cwd() / "outputCPP.nii"
+        if default_file.exists():
+            default_file.unlink()
+
+        app = typer.Typer()
+        app.command()(f3d)
+        result = runner.invoke(app, ["-r", str(ref_img), "-f", str(flo_img)])
+
+        assert result.exit_code == 0
+        # File should be cleaned up
+        assert not default_file.exists()
+
+
+def test_f3d_keeps_default_file_if_requested(mock_nifti_image, temp_dir):
+    """Test f3d keeps default output file when explicitly requested."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    default_file = Path.cwd() / "outputCPP.nii"
+
+    # Simulate creating the default file during registration
+    def create_default_file(*args, **kwargs):
+        default_file.touch()
+
+    with (
+        patch("niftyregw.commands.f3d.setup_logger"),
+        patch("niftyregw.commands.f3d.run", side_effect=create_default_file),
+    ):
+        # Clean up before test
+        if default_file.exists():
+            default_file.unlink()
+
+        app = typer.Typer()
+        app.command()(f3d)
+        result = runner.invoke(
+            app, ["-r", str(ref_img), "-f", str(flo_img), "--output-cpp", str(default_file)]
+        )
+
+        assert result.exit_code == 0
+        # File should still exist
+        assert default_file.exists()
+
+        # Clean up after test
+        default_file.unlink()
+
+
+def test_f3d_handles_existing_default_file(mock_nifti_image, temp_dir):
+    """Test f3d doesn't clean up pre-existing default file."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    default_file = Path.cwd() / "outputCPP.nii"
+    default_file.write_text("existing content")
+
+    with (
+        patch("niftyregw.commands.f3d.setup_logger"),
+        patch("niftyregw.commands.f3d.run"),
+    ):
+        app = typer.Typer()
+        app.command()(f3d)
+        result = runner.invoke(app, ["-r", str(ref_img), "-f", str(flo_img)])
+
+        assert result.exit_code == 0
+        # Pre-existing file should not be deleted
+        assert default_file.exists()
+        assert default_file.read_text() == "existing content"
+
+    # Clean up
+    default_file.unlink()

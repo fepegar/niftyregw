@@ -19,7 +19,7 @@ def test_get_path_found():
 def test_get_path_not_found():
     """Test _get_path when tool is not found."""
     with patch.object(wrapper, "_find", return_value=None):
-        with pytest.raises(FileNotFoundError, match="reg_aladin not found"):
+        with pytest.raises(FileNotFoundError, match="Please install NiftyReg first by running: niftyregw install"):
             wrapper._get_path("reg_aladin")
 
 

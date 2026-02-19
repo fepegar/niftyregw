@@ -52,7 +52,10 @@ def _format_matrix_line(line: str) -> str:
 def _get_path(tool: str) -> Path:
     path = _find(tool)
     if path is None:
-        msg = f"{tool} not found. Please install NiftyReg first."
+        msg = (
+            f"{tool} not found. Please install NiftyReg first"
+            " by running: niftyregw install"
+        )
         raise FileNotFoundError(msg)
     return path
 

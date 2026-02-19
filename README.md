@@ -49,6 +49,7 @@ niftyregw f3d \
 
 | Subcommand  | Description                                          |
 |-------------|------------------------------------------------------|
+| `install`   | Download and install NiftyReg binaries               |
 | `aladin`    | Block-matching global (affine/rigid) registration    |
 | `f3d`       | Fast Free-Form Deformation non-rigid registration    |
 | `measure`   | Compute similarity measures between images           |

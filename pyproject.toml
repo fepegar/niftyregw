@@ -1,6 +1,6 @@
 [project]
 name = "niftyregw"
-version = "0.1.1"
+version = "0.1.2"
 description = "Thin wrapper of NiftyReg with Python and CLI interfaces."
 readme = "README.md"
 authors = [
@@ -38,7 +38,7 @@ maintain = [
 ]
 
 [tool.bumpversion]
-current_version = "0.1.1"
+current_version = "0.1.2"
 commit = true
 tag = true
 

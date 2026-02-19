@@ -12,6 +12,54 @@ from loguru import logger
 
 from .install import find as _find
 
+# Matrix formatting constants
+_MATRIX_COLUMN_COUNT = 4
+
+
+def _format_matrix_line(line: str) -> str:
+    """Format a line that looks like a transformation matrix row.
+
+    Detects lines with exactly 4 numbers separated by whitespace and formats them
+    with consistent spacing and precision.
+
+    Args:
+        line: The line to potentially format.
+
+    Returns:
+        The formatted line if it's a matrix row, otherwise the original line.
+    """
+    parts = line.split()
+
+    # Check if this line has exactly 4 parts that are all numbers
+    if len(parts) != _MATRIX_COLUMN_COUNT:
+        return line
+
+    try:
+        numbers = [float(part) for part in parts]
+    except ValueError:
+        # Not all parts are numbers, return original
+        return line
+
+    # Format the numbers
+    formatted_parts = []
+    for num in numbers:
+        # Check if the number is effectively an integer (no fractional part)
+        if num == int(num):
+            # Format as integer
+            formatted_parts.append(str(int(num)))
+        else:
+            # Format with 3 decimal places
+            formatted_parts.append(f"{num:.3f}")
+
+    # Find the maximum width needed for proper alignment
+    max_width = max(len(part) for part in formatted_parts)
+
+    # Right-align all numbers
+    aligned_parts = [part.rjust(max_width) for part in formatted_parts]
+
+    # Add leading space and join with two spaces between columns
+    return " " + "  ".join(aligned_parts)
+
 
 def _get_path(tool: str) -> Path:
     path = _find(tool)
@@ -35,6 +83,8 @@ def _read_stream(
     """
     for line in stream:
         line = line.rstrip("\n")
+        # Format matrix lines for better readability
+        line = _format_matrix_line(line)
         if tool_logger is None:
             logger.info(line)
             continue

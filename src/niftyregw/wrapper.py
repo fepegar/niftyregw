@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from subprocess import PIPE, Popen
+from threading import Thread
 
 import loguru
 from loguru import logger
@@ -36,25 +37,36 @@ def run(tool: str, *args: str, tool_logger: loguru.Logger | None = None) -> None
         assert p.stdout is not None
         assert p.stderr is not None
 
-        for line in p.stderr:
-            line = line.rstrip("\n")
-            if tool_logger is None:
-                print(line)
-                continue
-            if line.startswith("[NiftyReg WARNING]"):
-                log = tool_logger.warning
-            elif line.startswith("[NiftyReg ERROR]"):
-                log = tool_logger.error
-            else:
-                log = tool_logger.info
-            log(line)
+        def read_stream(stream, is_stderr: bool = False) -> None:
+            for line in stream:
+                line = line.rstrip("\n")
+                if tool_logger is None:
+                    print(line)
+                    continue
+                if is_stderr:
+                    if line.startswith("[NiftyReg WARNING]"):
+                        log = tool_logger.warning
+                    elif line.startswith("[NiftyReg ERROR]"):
+                        log = tool_logger.error
+                    else:
+                        log = tool_logger.info
+                else:
+                    log = tool_logger.info
+                log(line)
 
-        for line in p.stdout:
-            line = line.rstrip("\n")
-            if tool_logger is None:
-                print(line)
-            else:
-                tool_logger.info(line)
+        # Read both streams concurrently using threads
+        stderr_thread = Thread(target=read_stream, args=(p.stderr, True))
+        stdout_thread = Thread(target=read_stream, args=(p.stdout, False))
+
+        stderr_thread.start()
+        stdout_thread.start()
+
+        # Wait for both threads to complete
+        stderr_thread.join()
+        stdout_thread.join()
+
+        # Wait for process to complete
+        p.wait()
 
 
 def reg_aladin(

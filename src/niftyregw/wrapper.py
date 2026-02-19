@@ -36,7 +36,7 @@ def _read_stream(
     for line in stream:
         line = line.rstrip("\n")
         if tool_logger is None:
-            print(line)
+            logger.info(line)
             continue
 
         # Determine log level and strip NiftyReg prefix

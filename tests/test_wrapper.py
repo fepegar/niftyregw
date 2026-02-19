@@ -38,10 +38,10 @@ def test_run_basic(temp_dir):
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
         patch("niftyregw.wrapper.Popen", return_value=mock_process),
-        patch("builtins.print") as mock_print,
+        patch.object(logger, "info") as mock_info,
     ):
         wrapper.run("reg_aladin", "-ref", "ref.nii")
-        assert mock_print.called
+        assert mock_info.called
 
 
 def test_run_with_logger(temp_dir):

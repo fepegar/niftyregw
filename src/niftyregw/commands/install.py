@@ -5,7 +5,7 @@ from typing import Annotated, Optional
 
 import typer
 
-from niftyregw.install import _DEFAULT_OUTPUT_DIR, _get_platform, download_niftyreg
+from niftyregw.install import _DEFAULT_OUTPUT_DIR, download_niftyreg, get_platform
 
 
 def install(
@@ -27,7 +27,7 @@ def install(
 ) -> None:
     """Download and install NiftyReg binaries."""
     if show_platform:
-        platform_name = _get_platform()
+        platform_name = get_platform()
         typer.echo(f"Platform: {platform_name}")
         return
 

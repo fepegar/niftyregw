@@ -47,7 +47,6 @@ def install(
         return
 
     out_dir = output_dir if output_dir is not None else _DEFAULT_OUTPUT_DIR
-    install_logger.info(f"Downloading NiftyReg binaries to {out_dir}...")
     installed = download_niftyreg(out_dir)
     for path in installed:
         install_logger.info(f"  Installed {path.name} → {path}")

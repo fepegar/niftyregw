@@ -19,7 +19,10 @@ def test_get_path_found():
 def test_get_path_not_found():
     """Test _get_path when tool is not found."""
     with patch.object(wrapper, "_find", return_value=None):
-        with pytest.raises(FileNotFoundError, match="Please install NiftyReg first by running: niftyregw install"):
+        with pytest.raises(
+            FileNotFoundError,
+            match="Please install NiftyReg first by running: niftyregw install",
+        ):
             wrapper._get_path("reg_aladin")
 
 
@@ -196,14 +199,18 @@ def test_run_handles_mixed_output(temp_dir):
     tool_path = temp_dir / "reg_aladin"
 
     mock_process = Mock()
-    mock_process.stdout = iter([
-        "[NiftyReg INFO] info line\n",
-        "regular line\n",
-    ])
-    mock_process.stderr = iter([
-        "[NiftyReg WARNING] warning line\n",
-        "[NiftyReg ERROR] error line\n",
-    ])
+    mock_process.stdout = iter(
+        [
+            "[NiftyReg INFO] info line\n",
+            "regular line\n",
+        ]
+    )
+    mock_process.stderr = iter(
+        [
+            "[NiftyReg WARNING] warning line\n",
+            "[NiftyReg ERROR] error line\n",
+        ]
+    )
     mock_process.__enter__ = Mock(return_value=mock_process)
     mock_process.__exit__ = Mock(return_value=False)
 
@@ -513,14 +520,14 @@ def test_format_matrix_line_not_matrix():
     # Not 4 numbers
     assert wrapper._format_matrix_line("1 2 3") == "1 2 3"
     assert wrapper._format_matrix_line("1 2 3 4 5") == "1 2 3 4 5"
-    
+
     # Not numbers
     assert wrapper._format_matrix_line("a b c d") == "a b c d"
-    
+
     # Regular text
     line = "This is a regular line"
     assert wrapper._format_matrix_line(line) == line
-    
+
     # Mixed numbers and text
     assert wrapper._format_matrix_line("1 2 three 4") == "1 2 three 4"
 
@@ -534,13 +541,13 @@ def test_format_matrix_line_alignment():
         "0.00397915        0.25023 0.886231        1.27031",
         "0 0       0       1",
     ]
-    
+
     results = [wrapper._format_matrix_line(line) for line in lines]
-    
+
     # Each result should start with a space
     for result in results:
         assert result.startswith(" ")
-    
+
     # All results should have 4 number groups separated by two spaces
     for result in results:
         # Strip leading space and split
@@ -550,12 +557,14 @@ def test_format_matrix_line_alignment():
 
 def test_read_stream_formats_matrices(temp_dir):
     """Test that _read_stream formats matrix lines."""
-    mock_stream = iter([
-        "Regular output line\n",
-        "0.953207  0.0293464  0.0196046  3.7271\n",
-        "Another regular line\n",
-        "0 0 0 1\n",
-    ])
+    mock_stream = iter(
+        [
+            "Regular output line\n",
+            "0.953207  0.0293464  0.0196046  3.7271\n",
+            "Another regular line\n",
+            "0 0 0 1\n",
+        ]
+    )
 
     captured_lines = []
 
@@ -563,7 +572,7 @@ def test_read_stream_formats_matrices(temp_dir):
         captured_lines.append(line)
 
     with patch("niftyregw.wrapper.logger.info", side_effect=capture_log):
-        wrapper._read_stream(mock_stream, False, None)
+        wrapper._read_stream(mock_stream, False, None)  # type: ignore
 
     # Check that regular lines pass through
     assert captured_lines[0] == "Regular output line"

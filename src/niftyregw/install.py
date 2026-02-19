@@ -62,7 +62,8 @@ def download_niftyreg(out_dir: Path = _DEFAULT_OUTPUT_DIR) -> list[Path]:
         List of paths to the installed binaries.
     """
     url = _get_download_url()
-    logger.info(f"Downloading from {url}")
+    download_logger = logger.bind(executable="niftyregw")
+    download_logger.info(f"Downloading from {url}")
     response = requests.get(url)
     if response.status_code != 200:
         msg = f"Failed to download NiftyReg. Status code: {response.status_code}"

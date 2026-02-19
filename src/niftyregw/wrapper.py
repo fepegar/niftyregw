@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from subprocess import PIPE, Popen
 
@@ -208,7 +207,7 @@ def reg_aladin(
     # Clean up the default output file if it was created and not requested
     if not existed_before and default_output.exists() and not user_requested_default:
         try:
-            os.remove(default_output)
+            default_output.unlink()
             logger.bind(executable="niftyregw").debug(
                 f"Cleaned up default output file: {default_output}"
             )

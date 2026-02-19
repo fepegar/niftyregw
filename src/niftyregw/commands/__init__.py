@@ -11,6 +11,7 @@ from niftyregw.wrapper import run
 
 def setup_logger(log_level: LogLevel) -> None:
     """Configure loguru for CLI output."""
+    logger.configure(extra={"executable": "niftyregw"})
     logger.remove()
     logger.add(
         sys.stderr,

@@ -52,7 +52,9 @@ def test_setup_logger_error():
 
 def test_setup_logger_format():
     """Test setup_logger uses correct format."""
-    with patch("loguru.logger.remove"), patch("loguru.logger.add") as mock_add:
+    with patch("loguru.logger.remove"), patch("loguru.logger.add") as mock_add, patch(
+        "loguru.logger.configure"
+    ):
         setup_logger(LogLevel.DEBUG)
         call_args = mock_add.call_args
         format_str = call_args[1]["format"]
@@ -61,6 +63,15 @@ def test_setup_logger_format():
         assert "executable" in format_str
         assert "level" in format_str
         assert "message" in format_str
+
+
+def test_setup_logger_configures_default_executable():
+    """Test setup_logger sets a default executable in extra to avoid KeyError."""
+    with patch("loguru.logger.remove"), patch("loguru.logger.add"), patch(
+        "loguru.logger.configure"
+    ) as mock_configure:
+        setup_logger(LogLevel.DEBUG)
+        mock_configure.assert_called_once_with(extra={"executable": "niftyregw"})
 
 
 def test_setup_logger_colorize():

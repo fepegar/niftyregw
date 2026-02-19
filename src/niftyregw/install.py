@@ -6,6 +6,7 @@ import zipfile
 from pathlib import Path
 
 import requests
+from loguru import logger
 
 _GITHUB_URL = "https://github.com/KCL-BMEIS/niftyreg/releases/download/v2.0.0/NiftyReg-{name}-v2.0.0.zip"
 
@@ -20,7 +21,13 @@ def _is_cuda_available():
         return False
 
 
-def _get_platform():
+def get_platform():
+    """Get the detected platform name for NiftyReg binary selection.
+
+    Returns:
+        Platform name string, one of: "Ubuntu", "Ubuntu-CUDA", "macOS",
+        "macOS-Intel", "Windows", or "Windows-CUDA".
+    """
     system = platform.system()
     has_cuda = _is_cuda_available()
     match system:
@@ -37,7 +44,7 @@ def _get_platform():
 
 
 def _get_download_url():
-    platform_name = _get_platform()
+    platform_name = get_platform()
     return _GITHUB_URL.format(name=platform_name)
 
 
@@ -55,6 +62,7 @@ def download_niftyreg(out_dir: Path = _DEFAULT_OUTPUT_DIR) -> list[Path]:
         List of paths to the installed binaries.
     """
     url = _get_download_url()
+    logger.info(f"Downloading from {url}")
     response = requests.get(url)
     if response.status_code != 200:
         msg = f"Failed to download NiftyReg. Status code: {response.status_code}"

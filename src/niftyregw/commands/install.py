@@ -5,7 +5,7 @@ from typing import Annotated, Optional
 
 import typer
 
-from niftyregw.install import _DEFAULT_OUTPUT_DIR, download_niftyreg
+from niftyregw.install import _DEFAULT_OUTPUT_DIR, download_niftyreg, get_platform
 
 
 def install(
@@ -17,8 +17,20 @@ def install(
             help="Directory to install binaries into. Default: ~/.local/bin.",
         ),
     ] = None,
+    show_platform: Annotated[
+        bool,
+        typer.Option(
+            "--platform",
+            help="Show the detected platform and exit without installing.",
+        ),
+    ] = False,
 ) -> None:
     """Download and install NiftyReg binaries."""
+    if show_platform:
+        platform_name = get_platform()
+        typer.echo(f"Platform: {platform_name}")
+        return
+
     out_dir = output_dir if output_dir is not None else _DEFAULT_OUTPUT_DIR
     typer.echo(f"Downloading NiftyReg binaries to {out_dir}...")
     installed = download_niftyreg(out_dir)

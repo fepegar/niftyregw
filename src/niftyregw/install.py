@@ -41,23 +41,47 @@ def _get_download_url():
     return _GITHUB_URL.format(name=platform_name)
 
 
-def _download_niftyreg(out_dir: Path) -> None:
+_DEFAULT_OUTPUT_DIR = Path.home() / ".local" / "bin"
+
+
+def download_niftyreg(out_dir: Path = _DEFAULT_OUTPUT_DIR) -> list[Path]:
+    """Download NiftyReg binaries and install them to *out_dir*.
+
+    Args:
+        out_dir: Directory where the binaries will be placed.
+            Defaults to ``~/.local/bin``.
+
+    Returns:
+        List of paths to the installed binaries.
+    """
     url = _get_download_url()
     response = requests.get(url)
-    if response.status_code == 200:
-        zip_path = Path(tempfile.gettempdir(), "NiftyReg.zip")
-        with open(zip_path, "wb") as f:
-            f.write(response.content)
-        out_tmp_dir = Path(tempfile.gettempdir(), "NiftyReg")
-        with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(out_tmp_dir)
-        out_dir.mkdir(parents=True, exist_ok=True)
-        for path in out_tmp_dir.rglob("**/reg_*"):
-            path.chmod(path.stat().st_mode | 0o111)  # chmod +x
-            path.rename(out_dir / path.name)
-    else:
+    if response.status_code != 200:
         msg = f"Failed to download NiftyReg. Status code: {response.status_code}"
         raise RuntimeError(msg)
+
+    zip_path = Path(tempfile.gettempdir(), "NiftyReg.zip")
+    with open(zip_path, "wb") as f:
+        f.write(response.content)
+    out_tmp_dir = Path(tempfile.gettempdir(), "NiftyReg")
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(out_tmp_dir)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    installed = []
+    for path in out_tmp_dir.rglob("**/reg_*"):
+        if not path.is_file():
+            continue
+        path.chmod(path.stat().st_mode | 0o111)
+        dest = out_dir / path.name
+        shutil.move(path, dest)
+        installed.append(dest)
+
+    # Clean up
+    shutil.rmtree(out_tmp_dir, ignore_errors=True)
+    zip_path.unlink(missing_ok=True)
+
+    return sorted(installed)
 
 
 def _which(program: str) -> Path | None:

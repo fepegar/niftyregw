@@ -1,0 +1,27 @@
+[tools]
+prek = "latest"
+
+[tasks.bump]
+description = "Bump the version (usage: mise run bump [patch|minor|major])"
+run = "uv run --group maintain bump-my-version bump {{ arg(i=0, name='part', default='patch') }} --verbose"
+
+[tasks."bump-dry"]
+description = "Dry-run version bump"
+run = "uv run --group maintain bump-my-version bump {{ arg(i=0, name='part', default='patch') }} --dry-run --verbose --allow-dirty"
+
+[tasks.push]
+description = "Push commits and tags"
+run = "git push && git push --tags"
+
+[tasks.release]
+description = "Bump version and push (usage: mise run release [patch|minor|major])"
+depends = ["bump"]
+run = "git push && git push --tags"
+
+[tasks.lint]
+description = "Run ruff linter"
+run = "uv run --group dev ruff check src/"
+
+[tasks.format]
+description = "Run ruff formatter"
+run = "uv run --group dev ruff format src/"

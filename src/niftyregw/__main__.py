@@ -5,6 +5,7 @@ import typer
 from niftyregw.commands.aladin import aladin
 from niftyregw.commands.average import app as average_app
 from niftyregw.commands.f3d import f3d
+from niftyregw.commands.install import install
 from niftyregw.commands.jacobian import jacobian
 from niftyregw.commands.measure import measure
 from niftyregw.commands.resample import resample
@@ -12,6 +13,11 @@ from niftyregw.commands.tools import tools
 from niftyregw.commands.transform import app as transform_app
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
+
+app.command(
+    "install",
+    help="Download and install NiftyReg binaries.",
+)(install)
 
 app.command(
     "aladin",

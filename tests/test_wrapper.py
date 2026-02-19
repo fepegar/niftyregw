@@ -38,10 +38,10 @@ def test_run_basic(temp_dir):
     with (
         patch.object(wrapper, "_get_path", return_value=tool_path),
         patch("niftyregw.wrapper.Popen", return_value=mock_process),
-        patch("builtins.print") as mock_print,
+        patch.object(logger, "info") as mock_info,
     ):
         wrapper.run("reg_aladin", "-ref", "ref.nii")
-        assert mock_print.called
+        assert mock_info.called
 
 
 def test_run_with_logger(temp_dir):
@@ -62,7 +62,7 @@ def test_run_with_logger(temp_dir):
         patch.object(test_logger, "warning") as mock_warning,
     ):
         wrapper.run("reg_aladin", "-ref", "ref.nii", tool_logger=test_logger)
-        mock_warning.assert_called_once_with("[NiftyReg WARNING] warning message")
+        mock_warning.assert_called_once_with("warning message")
 
 
 def test_run_strips_backslashes_and_newlines():
@@ -127,7 +127,7 @@ def test_run_handles_error_messages(temp_dir):
         patch.object(test_logger, "error") as mock_error,
     ):
         wrapper.run("reg_aladin", tool_logger=test_logger)
-        mock_error.assert_called_once_with("[NiftyReg ERROR] error message")
+        mock_error.assert_called_once_with("error message")
 
 
 def test_run_handles_info_messages(temp_dir):
@@ -149,6 +149,81 @@ def test_run_handles_info_messages(temp_dir):
     ):
         wrapper.run("reg_aladin", tool_logger=test_logger)
         mock_info.assert_called_once_with("Regular info message")
+
+
+def test_run_strips_niftyreg_info_prefix(temp_dir):
+    """Test run strips [NiftyReg INFO] prefix from messages."""
+    tool_path = temp_dir / "reg_aladin"
+
+    mock_process = Mock()
+    mock_process.stdout = iter(["[NiftyReg INFO] info message\n"])
+    mock_process.stderr = iter([])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
+
+    test_logger = logger.bind(executable="test")
+
+    with (
+        patch.object(wrapper, "_get_path", return_value=tool_path),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
+        patch.object(test_logger, "info") as mock_info,
+    ):
+        wrapper.run("reg_aladin", tool_logger=test_logger)
+        mock_info.assert_called_once_with("info message")
+
+
+def test_run_strips_niftyreg_info_prefix_from_stderr(temp_dir):
+    """Test run strips [NiftyReg INFO] prefix from stderr messages."""
+    tool_path = temp_dir / "reg_aladin"
+
+    mock_process = Mock()
+    mock_process.stdout = iter([])
+    mock_process.stderr = iter(["[NiftyReg INFO] info from stderr\n"])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
+
+    test_logger = logger.bind(executable="test")
+
+    with (
+        patch.object(wrapper, "_get_path", return_value=tool_path),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
+        patch.object(test_logger, "info") as mock_info,
+    ):
+        wrapper.run("reg_aladin", tool_logger=test_logger)
+        mock_info.assert_called_once_with("info from stderr")
+
+
+def test_run_handles_mixed_output(temp_dir):
+    """Test run handles mixed output with different prefixes."""
+    tool_path = temp_dir / "reg_aladin"
+
+    mock_process = Mock()
+    mock_process.stdout = iter([
+        "[NiftyReg INFO] info line\n",
+        "regular line\n",
+    ])
+    mock_process.stderr = iter([
+        "[NiftyReg WARNING] warning line\n",
+        "[NiftyReg ERROR] error line\n",
+    ])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
+
+    test_logger = logger.bind(executable="test")
+
+    with (
+        patch.object(wrapper, "_get_path", return_value=tool_path),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
+        patch.object(test_logger, "info") as mock_info,
+        patch.object(test_logger, "warning") as mock_warning,
+        patch.object(test_logger, "error") as mock_error,
+    ):
+        wrapper.run("reg_aladin", tool_logger=test_logger)
+        assert mock_info.call_count == 2
+        mock_info.assert_any_call("info line")
+        mock_info.assert_any_call("regular line")
+        mock_warning.assert_called_once_with("warning line")
+        mock_error.assert_called_once_with("error line")
 
 
 def test_reg_aladin_minimal(temp_dir):

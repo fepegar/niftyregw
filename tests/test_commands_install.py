@@ -15,7 +15,7 @@ def test_install_default_output_dir(temp_dir):
     """Test install with default output directory."""
     with (
         patch("niftyregw.commands.install.download_niftyreg") as mock_download,
-        patch("typer.echo") as mock_echo,
+        patch("niftyregw.commands.install.setup_logger") as mock_setup_logger,
     ):
         mock_download.return_value = [Path("/usr/local/bin/reg_aladin")]
 
@@ -26,7 +26,7 @@ def test_install_default_output_dir(temp_dir):
 
         assert result.exit_code == 0
         assert mock_download.called
-        assert mock_echo.called
+        assert mock_setup_logger.called
 
 
 def test_install_custom_output_dir(temp_dir):
@@ -35,7 +35,7 @@ def test_install_custom_output_dir(temp_dir):
 
     with (
         patch("niftyregw.commands.install.download_niftyreg") as mock_download,
-        patch("typer.echo") as mock_echo,
+        patch("niftyregw.commands.install.setup_logger"),
     ):
         mock_download.return_value = [custom_dir / "reg_aladin"]
 
@@ -53,6 +53,7 @@ def test_install_short_option(temp_dir):
 
     with (
         patch("niftyregw.commands.install.download_niftyreg") as mock_download,
+        patch("niftyregw.commands.install.setup_logger"),
     ):
         mock_download.return_value = [custom_dir / "reg_aladin"]
 
@@ -65,24 +66,32 @@ def test_install_short_option(temp_dir):
 
 
 def test_install_displays_installed_binaries(temp_dir):
-    """Test install displays installed binaries."""
+    """Test install logs installed binaries."""
     custom_dir = temp_dir / "custom"
     installed_files = [
         custom_dir / "reg_aladin",
         custom_dir / "reg_f3d",
     ]
 
-    with patch("niftyregw.commands.install.download_niftyreg") as mock_download:
+    with (
+        patch("niftyregw.commands.install.download_niftyreg") as mock_download,
+        patch("niftyregw.commands.install.setup_logger"),
+        patch("niftyregw.commands.install.logger") as mock_logger,
+    ):
         mock_download.return_value = installed_files
+        mock_bound_logger = mock_logger.bind.return_value
 
         app = typer.Typer()
         app.command()(install)
         result = runner.invoke(app, ["-o", str(custom_dir)])
 
         assert result.exit_code == 0
-        assert "reg_aladin" in result.stdout
-        assert "reg_f3d" in result.stdout
-        assert "2 binaries installed" in result.stdout
+        logged_messages = [
+            call.args[0] for call in mock_bound_logger.info.call_args_list
+        ]
+        assert any("reg_aladin" in msg for msg in logged_messages)
+        assert any("reg_f3d" in msg for msg in logged_messages)
+        assert any("2 binaries installed" in msg for msg in logged_messages)
 
 
 def test_install_help():

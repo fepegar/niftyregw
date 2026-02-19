@@ -230,9 +230,8 @@ def f3d(
     tool_logger = logger.bind(executable="reg_f3d")
 
     if (landmarks_weight is not None) != (landmarks_file is not None):
-        typer.echo(
-            "Both --landmarks-weight and --landmarks-file must be provided together.",
-            err=True,
+        tool_logger.error(
+            "Both --landmarks-weight and --landmarks-file must be provided together."
         )
         raise typer.Exit(code=1)
 

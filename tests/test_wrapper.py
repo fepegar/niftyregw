@@ -556,24 +556,24 @@ def test_read_stream_formats_matrices(temp_dir):
         "Another regular line\n",
         "0 0 0 1\n",
     ])
-    
+
     captured_lines = []
-    
-    def capture_print(line):
+
+    def capture_log(line):
         captured_lines.append(line)
-    
-    with patch("builtins.print", side_effect=capture_print):
+
+    with patch("niftyregw.wrapper.logger.info", side_effect=capture_log):
         wrapper._read_stream(mock_stream, False, None)
-    
+
     # Check that regular lines pass through
     assert captured_lines[0] == "Regular output line"
-    
+
     # Check that matrix lines are formatted
     assert "0.953" in captured_lines[1]
     assert "0.029" in captured_lines[1]
-    
+
     # Check that another regular line passes through
     assert captured_lines[2] == "Another regular line"
-    
+
     # Check that the last matrix line is formatted
     assert len(captured_lines[3].split()) == 4

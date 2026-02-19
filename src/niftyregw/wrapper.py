@@ -29,17 +29,17 @@ def _format_matrix_line(line: str) -> str:
         The formatted line if it's a matrix row, otherwise the original line.
     """
     parts = line.split()
-    
+
     # Check if this line has exactly 4 parts that are all numbers
     if len(parts) != _MATRIX_COLUMN_COUNT:
         return line
-    
+
     try:
         numbers = [float(part) for part in parts]
     except ValueError:
         # Not all parts are numbers, return original
         return line
-    
+
     # Format the numbers
     formatted_parts = []
     for num in numbers:
@@ -50,13 +50,13 @@ def _format_matrix_line(line: str) -> str:
         else:
             # Format with 3 decimal places
             formatted_parts.append(f"{num:.3f}")
-    
+
     # Find the maximum width needed for proper alignment
     max_width = max(len(part) for part in formatted_parts)
-    
+
     # Right-align all numbers
     aligned_parts = [part.rjust(max_width) for part in formatted_parts]
-    
+
     # Add leading space and join with two spaces between columns
     return " " + "  ".join(aligned_parts)
 

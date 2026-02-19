@@ -14,8 +14,4 @@ uv.lock
 outputAffine.txt
 site/
 
-# Test coverage
-.coverage
-coverage.xml
-htmlcov/
 .pytest_cache/

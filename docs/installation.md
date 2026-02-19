@@ -23,11 +23,39 @@
 ## Install NiftyReg
 
 `niftyregw` requires the NiftyReg binaries to be available on your `PATH`.
-You can install them from the
-[NiftyReg releases page](https://github.com/KCL-BMEIS/niftyreg/releases).
+The easiest way is to use the built-in `install` command:
 
-Download the appropriate archive for your platform, extract it, and ensure the
-binaries (e.g., `reg_aladin`, `reg_f3d`) are on your `PATH`.
+```shell
+niftyregw install
+```
+
+This downloads the correct pre-built NiftyReg binaries for your platform and
+places them in `~/.local/bin` by default.
+
+To install to a custom directory:
+
+```shell
+niftyregw install --output-dir /opt/niftyreg/bin
+```
+
+Or from Python:
+
+```python
+from niftyregw import download_niftyreg
+
+download_niftyreg()  # ~/.local/bin
+download_niftyreg("/opt/niftyreg/bin")  # custom directory
+```
+
+!!! warning "Ensure the directory is on your `PATH`"
+
+    If `~/.local/bin` is not already on your `PATH`, add it:
+
+    ```shell
+    export PATH="$HOME/.local/bin:$PATH"
+    ```
+
+    Add this line to your `~/.bashrc` or `~/.zshrc` to make it permanent.
 
 ### Verify the installation
 

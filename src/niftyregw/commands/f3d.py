@@ -6,11 +6,12 @@ from typing import Annotated, Optional
 import typer
 from loguru import logger
 
-from niftyregw.commands import make_help_callback, setup_logger
+from niftyregw.commands import make_help_callback, make_version_callback, setup_logger
 from niftyregw.enums import LogLevel
 from niftyregw.wrapper import run
 
 _help_callback = make_help_callback("reg_f3d")
+_version_callback = make_version_callback("reg_f3d")
 
 
 def f3d(
@@ -196,7 +197,13 @@ def f3d(
         Optional[int], typer.Option(help="Number of threads to use with OpenMP.")
     ] = None,
     version: Annotated[
-        bool, typer.Option("--version", help="Print version and exit.")
+        bool,
+        typer.Option(
+            "--version",
+            is_eager=True,
+            callback=_version_callback,
+            help="Print version and exit.",
+        ),
     ] = False,
     _: Annotated[
         bool,
@@ -221,10 +228,6 @@ def f3d(
     """Fast Free-Form Deformation (F3D) non-rigid registration."""
     setup_logger(log_level)
     tool_logger = logger.bind(executable="reg_f3d")
-
-    if version:
-        run("reg_f3d", "--version", tool_logger=tool_logger)
-        raise typer.Exit()
 
     if (landmarks_weight is not None) != (landmarks_file is not None):
         typer.echo(

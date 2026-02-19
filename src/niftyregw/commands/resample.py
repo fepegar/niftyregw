@@ -6,11 +6,12 @@ from typing import Annotated, Optional
 import typer
 from loguru import logger
 
-from niftyregw.commands import make_help_callback, setup_logger
+from niftyregw.commands import make_help_callback, make_version_callback, setup_logger
 from niftyregw.enums import LogLevel
 from niftyregw.wrapper import run
 
 _help_callback = make_help_callback("reg_resample")
+_version_callback = make_version_callback("reg_resample")
 
 
 def resample(
@@ -62,7 +63,13 @@ def resample(
         Optional[int], typer.Option(help="Number of threads to use with OpenMP.")
     ] = None,
     version: Annotated[
-        bool, typer.Option("--version", help="Print version and exit.")
+        bool,
+        typer.Option(
+            "--version",
+            is_eager=True,
+            callback=_version_callback,
+            help="Print version and exit.",
+        ),
     ] = False,
     _: Annotated[
         bool,
@@ -87,10 +94,6 @@ def resample(
     """Resample an image with a given transformation."""
     setup_logger(log_level)
     tool_logger = logger.bind(executable="reg_resample")
-
-    if version:
-        run("reg_resample", "--version", tool_logger=tool_logger)
-        raise typer.Exit()
 
     args: list[str] = ["-ref", str(reference), "-flo", str(floating)]
     if transformation is not None:

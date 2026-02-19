@@ -6,12 +6,13 @@ from typing import Annotated, Optional
 import typer
 from loguru import logger
 
-from niftyregw.commands import make_help_callback, setup_logger
+from niftyregw.commands import make_help_callback, make_version_callback, setup_logger
 from niftyregw.enums import LogLevel
 from niftyregw.wrapper import reg_aladin as _reg_aladin
 from niftyregw.wrapper import run
 
 _help_callback = make_help_callback("reg_aladin")
+_version_callback = make_version_callback("reg_aladin")
 
 
 def aladin(
@@ -176,7 +177,13 @@ def aladin(
     ] = None,
     verbose_off: Annotated[bool, typer.Option(help="Turn verbose off.")] = False,
     version: Annotated[
-        bool, typer.Option("--version", help="Print reg_aladin version and exit.")
+        bool,
+        typer.Option(
+            "--version",
+            is_eager=True,
+            callback=_version_callback,
+            help="Print reg_aladin version and exit.",
+        ),
     ] = False,
     _: Annotated[
         bool,
@@ -200,10 +207,6 @@ def aladin(
 ) -> None:
     """Block-matching global (affine/rigid) registration."""
     setup_logger(log_level)
-
-    if version:
-        run("reg_aladin", "--version", tool_logger=logger.bind(executable="reg_aladin"))
-        raise typer.Exit()
 
     _reg_aladin(
         reference,

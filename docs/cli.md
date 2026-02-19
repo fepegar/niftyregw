@@ -12,6 +12,19 @@ niftyregw --help
     Every subcommand supports `-h` to print the **original** NiftyReg help
     message, and `--help` for the `niftyregw` help.
 
+## `install`
+
+Download and install NiftyReg binaries for your platform.
+
+```shell
+niftyregw install
+niftyregw install --output-dir /opt/niftyreg/bin
+```
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--output-dir` | `-o` | Directory to install binaries into (default: `~/.local/bin`) |
+
 ## `aladin`
 
 Block-matching global (affine/rigid) registration.

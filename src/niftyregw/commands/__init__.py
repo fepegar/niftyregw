@@ -29,3 +29,14 @@ def make_help_callback(tool: str):
             raise typer.Exit()
 
     return _callback
+
+
+def make_version_callback(tool: str):
+    """Create an eager Typer callback that shows the original binary version."""
+
+    def _callback(value: bool) -> None:
+        if value:
+            run(tool, "--version")
+            raise typer.Exit()
+
+    return _callback

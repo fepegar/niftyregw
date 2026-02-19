@@ -6,11 +6,12 @@ from typing import Annotated, Optional, Tuple
 import typer
 from loguru import logger
 
-from niftyregw.commands import make_help_callback, setup_logger
+from niftyregw.commands import make_help_callback, make_version_callback, setup_logger
 from niftyregw.enums import LogLevel
 from niftyregw.wrapper import run
 
 _help_callback = make_help_callback("reg_tools")
+_version_callback = make_version_callback("reg_tools")
 
 
 def tools(
@@ -105,7 +106,13 @@ def tools(
         Optional[int], typer.Option(help="Number of threads to use with OpenMP.")
     ] = None,
     version: Annotated[
-        bool, typer.Option("--version", help="Print version and exit.")
+        bool,
+        typer.Option(
+            "--version",
+            is_eager=True,
+            callback=_version_callback,
+            help="Print version and exit.",
+        ),
     ] = False,
     _: Annotated[
         bool,
@@ -130,10 +137,6 @@ def tools(
     """Image manipulation tools."""
     setup_logger(log_level)
     tool_logger = logger.bind(executable="reg_tools")
-
-    if version:
-        run("reg_tools", "--version", tool_logger=tool_logger)
-        raise typer.Exit()
 
     args: list[str] = ["-in", str(input_image)]
     if output is not None:

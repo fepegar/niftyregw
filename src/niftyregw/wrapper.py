@@ -71,13 +71,11 @@ def run(tool: str, *args: str, tool_logger: loguru.Logger | None = None) -> None
         stderr_thread = Thread(
             target=_read_stream,
             args=(p.stderr, True, tool_logger),
-            daemon=True,
             name="stderr-reader",
         )
         stdout_thread = Thread(
             target=_read_stream,
             args=(p.stdout, False, tool_logger),
-            daemon=True,
             name="stdout-reader",
         )
 

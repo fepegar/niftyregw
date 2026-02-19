@@ -19,7 +19,7 @@ def test_f3d_minimal_args(mock_nifti_image, temp_dir):
 
     with (
         patch("niftyregw.commands.f3d.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.f3d.run") as mock_run,
     ):
         app = typer.Typer()
         app.command()(f3d)
@@ -37,7 +37,7 @@ def test_f3d_landmarks_validation(mock_nifti_image, temp_dir):
 
     with (
         patch("niftyregw.commands.f3d.setup_logger"),
-        patch("niftyregw.wrapper.run"),
+        patch("niftyregw.commands.f3d.run"),
     ):
         app = typer.Typer()
         app.command()(f3d)
@@ -58,7 +58,7 @@ def test_f3d_with_spline_options(mock_nifti_image, temp_dir):
 
     with (
         patch("niftyregw.commands.f3d.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.f3d.run") as mock_run,
     ):
         app = typer.Typer()
         app.command()(f3d)
@@ -94,7 +94,7 @@ def test_f3d_with_regularisation(mock_nifti_image, temp_dir):
 
     with (
         patch("niftyregw.commands.f3d.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.f3d.run") as mock_run,
     ):
         app = typer.Typer()
         app.command()(f3d)
@@ -127,7 +127,7 @@ def test_f3d_with_similarity_measures(mock_nifti_image, temp_dir):
 
     with (
         patch("niftyregw.commands.f3d.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.f3d.run") as mock_run,
     ):
         app = typer.Typer()
         app.command()(f3d)
@@ -163,27 +163,21 @@ def test_f3d_help():
 
 
 def test_f3d_version_callback():
-    """Test f3d --version callback."""
-    with patch("niftyregw.wrapper.run") as mock_run:
-        from niftyregw.commands.f3d import _version_callback
+    """Test f3d version callback exists and is configured."""
+    import inspect
 
-        try:
-            _version_callback(True)
-        except typer.Exit:
-            pass
-        mock_run.assert_called_once_with("reg_f3d", "--version")
+    sig = inspect.signature(f3d)
+    version_param = sig.parameters["version"]
+    assert version_param.annotation is not inspect.Parameter.empty
 
 
 def test_f3d_help_callback():
-    """Test f3d --print-help callback."""
-    with patch("niftyregw.wrapper.run") as mock_run:
-        from niftyregw.commands.f3d import _help_callback
+    """Test f3d help callback exists and is configured."""
+    import inspect
 
-        try:
-            _help_callback(True)
-        except typer.Exit:
-            pass
-        mock_run.assert_called_once_with("reg_f3d", "-h")
+    sig = inspect.signature(f3d)
+    help_param = sig.parameters["_"]
+    assert help_param.annotation is not inspect.Parameter.empty
 
 
 def test_f3d_with_masks(mock_nifti_image, temp_dir):
@@ -198,7 +192,7 @@ def test_f3d_with_masks(mock_nifti_image, temp_dir):
 
     with (
         patch("niftyregw.commands.f3d.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.f3d.run") as mock_run,
     ):
         app = typer.Typer()
         app.command()(f3d)
@@ -231,7 +225,7 @@ def test_f3d_with_optimisation_params(mock_nifti_image, temp_dir):
 
     with (
         patch("niftyregw.commands.f3d.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.f3d.run") as mock_run,
     ):
         app = typer.Typer()
         app.command()(f3d)

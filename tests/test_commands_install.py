@@ -14,7 +14,7 @@ runner = CliRunner()
 def test_install_default_output_dir(temp_dir):
     """Test install with default output directory."""
     with (
-        patch("niftyregw.install.download_niftyreg") as mock_download,
+        patch("niftyregw.commands.install.download_niftyreg") as mock_download,
         patch("typer.echo") as mock_echo,
     ):
         mock_download.return_value = [Path("/usr/local/bin/reg_aladin")]
@@ -34,7 +34,7 @@ def test_install_custom_output_dir(temp_dir):
     custom_dir = temp_dir / "custom"
 
     with (
-        patch("niftyregw.install.download_niftyreg") as mock_download,
+        patch("niftyregw.commands.install.download_niftyreg") as mock_download,
         patch("typer.echo") as mock_echo,
     ):
         mock_download.return_value = [custom_dir / "reg_aladin"]
@@ -52,7 +52,7 @@ def test_install_short_option(temp_dir):
     custom_dir = temp_dir / "custom"
 
     with (
-        patch("niftyregw.install.download_niftyreg") as mock_download,
+        patch("niftyregw.commands.install.download_niftyreg") as mock_download,
     ):
         mock_download.return_value = [custom_dir / "reg_aladin"]
 
@@ -72,7 +72,7 @@ def test_install_displays_installed_binaries(temp_dir):
         custom_dir / "reg_f3d",
     ]
 
-    with patch("niftyregw.install.download_niftyreg") as mock_download:
+    with patch("niftyregw.commands.install.download_niftyreg") as mock_download:
         mock_download.return_value = installed_files
 
         app = typer.Typer()

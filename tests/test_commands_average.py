@@ -33,7 +33,7 @@ def test_avg_command(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(
             app, ["avg", "-o", str(output), str(input1), str(input2)]
@@ -54,7 +54,7 @@ def test_avg_with_nn_flag(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(app, ["avg", "-o", str(output), str(input1), "--nn"])
 
@@ -71,7 +71,7 @@ def test_avg_with_linear_flag(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(app, ["avg", "-o", str(output), str(input1), "--lin"])
 
@@ -90,7 +90,7 @@ def test_avg_lts_command(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(
             app, ["avg-lts", "-o", str(output), str(input1), str(input2)]
@@ -113,7 +113,7 @@ def test_avg_tran_command(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(
             app,
@@ -145,7 +145,7 @@ def test_demean_command(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(
             app,
@@ -171,7 +171,7 @@ def test_demean_noaff_command(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(
             app,
@@ -200,7 +200,7 @@ def test_cmd_file_command(temp_dir):
 
     with (
         patch("niftyregw.commands.average.setup_logger"),
-        patch("niftyregw.wrapper.run") as mock_run,
+        patch("niftyregw.commands.average.run") as mock_run,
     ):
         result = runner.invoke(
             app, ["cmd-file", "-o", str(output), "-c", str(cmd_file_path)]

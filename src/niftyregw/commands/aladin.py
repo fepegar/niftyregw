@@ -4,12 +4,10 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
-from loguru import logger
 
 from niftyregw.commands import make_help_callback, make_version_callback, setup_logger
 from niftyregw.enums import LogLevel
 from niftyregw.wrapper import reg_aladin as _reg_aladin
-from niftyregw.wrapper import run
 
 _help_callback = make_help_callback("reg_aladin")
 _version_callback = make_version_callback("reg_aladin")

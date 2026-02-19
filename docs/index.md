@@ -52,4 +52,3 @@ efficient medical image registration developed at
 
     `niftyregw` expects NiftyReg binaries (e.g., `reg_aladin`) to be available
     on your `PATH`. See [Installation](installation.md) for details.
-

@@ -6,6 +6,7 @@ import zipfile
 from pathlib import Path
 
 import requests
+from loguru import logger
 
 _GITHUB_URL = "https://github.com/KCL-BMEIS/niftyreg/releases/download/v2.0.0/NiftyReg-{name}-v2.0.0.zip"
 
@@ -55,6 +56,7 @@ def download_niftyreg(out_dir: Path = _DEFAULT_OUTPUT_DIR) -> list[Path]:
         List of paths to the installed binaries.
     """
     url = _get_download_url()
+    logger.info(f"Downloading from {url}")
     response = requests.get(url)
     if response.status_code != 200:
         msg = f"Failed to download NiftyReg. Status code: {response.status_code}"

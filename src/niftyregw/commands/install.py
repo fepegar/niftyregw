@@ -17,7 +17,7 @@ def install(
             help="Directory to install binaries into. Default: ~/.local/bin.",
         ),
     ] = None,
-    platform: Annotated[
+    show_platform: Annotated[
         bool,
         typer.Option(
             "--platform",
@@ -26,7 +26,7 @@ def install(
     ] = False,
 ) -> None:
     """Download and install NiftyReg binaries."""
-    if platform:
+    if show_platform:
         platform_name = _get_platform()
         typer.echo(f"Platform: {platform_name}")
         return

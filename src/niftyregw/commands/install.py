@@ -4,7 +4,10 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
+from loguru import logger
 
+from niftyregw.commands import setup_logger
+from niftyregw.enums import LogLevel
 from niftyregw.install import _DEFAULT_OUTPUT_DIR, download_niftyreg, get_platform
 
 
@@ -24,16 +27,28 @@ def install(
             help="Show the detected platform and exit without installing.",
         ),
     ] = False,
+    log_level: Annotated[
+        LogLevel,
+        typer.Option(
+            "--log",
+            case_sensitive=False,
+            help="Set the log level.",
+            rich_help_panel="Logging",
+        ),
+    ] = LogLevel.DEBUG,
 ) -> None:
     """Download and install NiftyReg binaries."""
+    setup_logger(log_level)
+    install_logger = logger.bind(executable="niftyregw")
+
     if show_platform:
         platform_name = get_platform()
-        typer.echo(f"Platform: {platform_name}")
+        install_logger.info(f"Platform: {platform_name}")
         return
 
     out_dir = output_dir if output_dir is not None else _DEFAULT_OUTPUT_DIR
-    typer.echo(f"Downloading NiftyReg binaries to {out_dir}...")
+    install_logger.info(f"Downloading NiftyReg binaries to {out_dir}...")
     installed = download_niftyreg(out_dir)
     for path in installed:
-        typer.echo(f"  Installed {path.name} → {path}")
-    typer.echo(f"Done! {len(installed)} binaries installed.")
+        install_logger.info(f"  Installed {path.name} → {path}")
+    install_logger.info(f"Done! {len(installed)} binaries installed.")

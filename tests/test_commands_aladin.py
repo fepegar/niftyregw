@@ -206,7 +206,7 @@ def test_aladin_with_masks(mock_nifti_image, temp_dir):
                 str(ref_img),
                 "-f",
                 str(flo_img),
-                "-m",
+                "--reference-mask",
                 str(ref_mask),
                 "--floating-mask",
                 str(flo_mask),

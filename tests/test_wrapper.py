@@ -462,23 +462,22 @@ def test_format_matrix_line_with_zeros():
     """Test matrix line formatting with zeros."""
     line = "0 0       0       1"
     result = wrapper._format_matrix_line(line)
-    # Zeros should remain as "0" without decimal places
-    # Check that result has properly formatted zeros and one
+    # All numbers should be formatted with 3 decimal places
     parts = result.split()
-    assert "0" in parts
-    assert "1" in parts
+    assert "0.000" in parts
+    assert "1.000" in parts
 
 
 def test_format_matrix_line_with_integers():
-    """Test matrix line formatting preserves integers."""
+    """Test matrix line formatting with integers."""
     line = "1.0 2.0 3.0 4.0"
     result = wrapper._format_matrix_line(line)
-    # Should format as integers since they have no fractional part
+    # All numbers should be formatted with 3 decimal places
     parts = result.split()
-    assert "1" in parts
-    assert "2" in parts
-    assert "3" in parts
-    assert "4" in parts
+    assert "1.000" in parts
+    assert "2.000" in parts
+    assert "3.000" in parts
+    assert "4.000" in parts
 
 
 def test_format_matrix_line_large_numbers():
@@ -502,10 +501,11 @@ def test_format_matrix_line_integer_large_numbers():
     line = "100 200 -300 1000"
     result = wrapper._format_matrix_line(line)
     parts = result.split()
-    assert "100" in parts
-    assert "200" in parts
-    assert "-300" in parts
-    assert "1000" in parts
+    assert "100.000" in parts
+    assert "200.000" in parts
+    assert "-300.000" in parts
+    # Numbers > 999 will exceed the minimum width of 7 characters
+    assert "1000.000" in parts
 
 
 def test_format_matrix_line_not_matrix():

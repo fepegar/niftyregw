@@ -40,25 +40,13 @@ def _format_matrix_line(line: str) -> str:
         # Not all parts are numbers, return original
         return line
 
-    # Format the numbers
-    formatted_parts = []
-    for num in numbers:
-        # Check if the number is effectively an integer (no fractional part)
-        if num == int(num):
-            # Format as integer
-            formatted_parts.append(str(int(num)))
-        else:
-            # Format with 3 decimal places
-            formatted_parts.append(f"{num:.3f}")
-
-    # Find the maximum width needed for proper alignment
-    max_width = max(len(part) for part in formatted_parts)
-
-    # Right-align all numbers
-    aligned_parts = [part.rjust(max_width) for part in formatted_parts]
+    # Format all numbers with 3 decimal places and minimum width of 7 characters
+    # Width of 7 accommodates: 3 digits + 1 decimal point + 3 decimals
+    # Numbers larger than 999.999 will expand beyond the minimum width
+    formatted_parts = [f"{num:7.3f}" for num in numbers]
 
     # Add leading space and join with two spaces between columns
-    return " " + "  ".join(aligned_parts)
+    return " " + "  ".join(formatted_parts)
 
 
 def _get_path(tool: str) -> Path:

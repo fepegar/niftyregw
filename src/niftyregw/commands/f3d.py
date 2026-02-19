@@ -236,6 +236,22 @@ def f3d(
         )
         raise typer.Exit(code=1)
 
+    # Check if the default output file exists before registration
+    default_output = Path("outputCPP.nii")
+    existed_before = default_output.exists()
+
+    # Determine if user requested the default output path
+    user_requested_default = False
+    if output_cpp is not None:
+        try:
+            # Resolve both paths to absolute paths for comparison
+            user_path = Path(output_cpp).resolve()
+            default_path = default_output.resolve()
+            user_requested_default = user_path == default_path
+        except (OSError, RuntimeError):
+            # If path resolution fails, treat as different paths
+            pass
+
     args: list[str] = ["-ref", str(reference), "-flo", str(floating)]
     # Initial transformation
     if input_affine is not None:
@@ -334,3 +350,15 @@ def f3d(
         args.extend(["-omp", str(omp_threads)])
 
     run("reg_f3d", *args, tool_logger=tool_logger)
+
+    # Clean up the default output file if it was created and not requested
+    if not existed_before and default_output.exists() and not user_requested_default:
+        try:
+            default_output.unlink()
+            logger.bind(executable="niftyregw").debug(
+                f"Cleaned up default output file: {default_output}"
+            )
+        except OSError as e:
+            logger.bind(executable="niftyregw").warning(
+                f"Failed to clean up {default_output}: {e}"
+            )

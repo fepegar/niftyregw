@@ -504,7 +504,7 @@ def test_format_matrix_line_integer_large_numbers():
     assert "100.000" in parts
     assert "200.000" in parts
     assert "-300.000" in parts
-    # Note: 1000 exceeds 3 digits, so width will be larger
+    # Numbers > 999 will exceed the minimum width of 7 characters
     assert "1000.000" in parts
 
 

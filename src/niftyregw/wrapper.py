@@ -40,8 +40,9 @@ def _format_matrix_line(line: str) -> str:
         # Not all parts are numbers, return original
         return line
 
-    # Format all numbers with 3 decimal places, assuming 3 digits on the left
-    # Width is 7: 3 digits + 1 decimal point + 3 decimals
+    # Format all numbers with 3 decimal places and minimum width of 7 characters
+    # Width of 7 accommodates: 3 digits + 1 decimal point + 3 decimals
+    # Numbers larger than 999.999 will expand beyond the minimum width
     formatted_parts = [f"{num:7.3f}" for num in numbers]
 
     # Add leading space and join with two spaces between columns

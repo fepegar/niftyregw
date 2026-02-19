@@ -62,7 +62,7 @@ def test_run_with_logger(temp_dir):
         patch.object(test_logger, "warning") as mock_warning,
     ):
         wrapper.run("reg_aladin", "-ref", "ref.nii", tool_logger=test_logger)
-        mock_warning.assert_called_once_with("[NiftyReg WARNING] warning message")
+        mock_warning.assert_called_once_with("warning message")
 
 
 def test_run_strips_backslashes_and_newlines():
@@ -127,7 +127,7 @@ def test_run_handles_error_messages(temp_dir):
         patch.object(test_logger, "error") as mock_error,
     ):
         wrapper.run("reg_aladin", tool_logger=test_logger)
-        mock_error.assert_called_once_with("[NiftyReg ERROR] error message")
+        mock_error.assert_called_once_with("error message")
 
 
 def test_run_handles_info_messages(temp_dir):
@@ -149,6 +149,27 @@ def test_run_handles_info_messages(temp_dir):
     ):
         wrapper.run("reg_aladin", tool_logger=test_logger)
         mock_info.assert_called_once_with("Regular info message")
+
+
+def test_run_strips_niftyreg_info_prefix(temp_dir):
+    """Test run strips [NiftyReg INFO] prefix from messages."""
+    tool_path = temp_dir / "reg_aladin"
+
+    mock_process = Mock()
+    mock_process.stdout = iter(["[NiftyReg INFO] info message\n"])
+    mock_process.stderr = iter([])
+    mock_process.__enter__ = Mock(return_value=mock_process)
+    mock_process.__exit__ = Mock(return_value=False)
+
+    test_logger = logger.bind(executable="test")
+
+    with (
+        patch.object(wrapper, "_get_path", return_value=tool_path),
+        patch("niftyregw.wrapper.Popen", return_value=mock_process),
+        patch.object(test_logger, "info") as mock_info,
+    ):
+        wrapper.run("reg_aladin", tool_logger=test_logger)
+        mock_info.assert_called_once_with("info message")
 
 
 def test_reg_aladin_minimal(temp_dir):

@@ -89,8 +89,9 @@ run(
 `niftyregw` uses [Loguru](https://github.com/Delgan/loguru) for structured
 logging. NiftyReg's output is classified by level:
 
-- Lines starting with `[NiftyReg WARNING]` → `WARNING`
-- Lines starting with `[NiftyReg ERROR]` → `ERROR`
+- Lines starting with `[NiftyReg WARNING]` → `WARNING` (prefix stripped)
+- Lines starting with `[NiftyReg ERROR]` → `ERROR` (prefix stripped)
+- Lines starting with `[NiftyReg INFO]` → `INFO` (prefix stripped)
 - All other lines → `INFO`
 
 You can pass a custom logger to `run`:

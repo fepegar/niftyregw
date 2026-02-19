@@ -362,3 +362,139 @@ def test_run_with_logging(temp_dir):
         # Check that arguments were properly parsed
         args = mock_run.call_args[0]
         assert "reg_aladin" in args
+
+
+def test_format_matrix_line_basic():
+    """Test basic matrix line formatting with mixed precision."""
+    line = "0.953207  0.0293464       0.0196046       3.7271"
+    result = wrapper._format_matrix_line(line)
+    # Should format to 3 decimal places and align
+    assert "0.953" in result
+    assert "0.029" in result
+    assert "0.020" in result
+    assert "3.727" in result
+
+
+def test_format_matrix_line_with_negative():
+    """Test matrix line formatting with negative numbers."""
+    line = "0.00319424        0.974996        -0.226491       5.05835"
+    result = wrapper._format_matrix_line(line)
+    assert "0.003" in result
+    assert "0.975" in result
+    assert "-0.226" in result
+    assert "5.058" in result
+
+
+def test_format_matrix_line_with_zeros():
+    """Test matrix line formatting with zeros."""
+    line = "0 0       0       1"
+    result = wrapper._format_matrix_line(line)
+    # Zeros should remain as "0" without decimal places
+    # Check that result has properly formatted zeros and one
+    parts = result.split()
+    assert "0" in parts
+    assert "1" in parts
+
+
+def test_format_matrix_line_with_integers():
+    """Test matrix line formatting preserves integers."""
+    line = "1.0 2.0 3.0 4.0"
+    result = wrapper._format_matrix_line(line)
+    # Should format as integers since they have no fractional part
+    parts = result.split()
+    assert "1" in parts
+    assert "2" in parts
+    assert "3" in parts
+    assert "4" in parts
+
+
+def test_format_matrix_line_large_numbers():
+    """Test matrix line formatting with numbers >= 10 and >= 100."""
+    line = "10.5 20.123 -15.678 100.234"
+    result = wrapper._format_matrix_line(line)
+    assert "10.500" in result
+    assert "20.123" in result
+    assert "-15.678" in result
+    assert "100.234" in result
+
+
+def test_format_matrix_line_integer_large_numbers():
+    """Test matrix line formatting with large integers."""
+    line = "100 200 -300 1000"
+    result = wrapper._format_matrix_line(line)
+    parts = result.split()
+    assert "100" in parts
+    assert "200" in parts
+    assert "-300" in parts
+    assert "1000" in parts
+
+
+def test_format_matrix_line_not_matrix():
+    """Test that non-matrix lines pass through unchanged."""
+    # Not 4 numbers
+    assert wrapper._format_matrix_line("1 2 3") == "1 2 3"
+    assert wrapper._format_matrix_line("1 2 3 4 5") == "1 2 3 4 5"
+    
+    # Not numbers
+    assert wrapper._format_matrix_line("a b c d") == "a b c d"
+    
+    # Regular text
+    line = "This is a regular line"
+    assert wrapper._format_matrix_line(line) == line
+    
+    # Mixed numbers and text
+    assert wrapper._format_matrix_line("1 2 three 4") == "1 2 three 4"
+
+
+def test_format_matrix_line_alignment():
+    """Test that matrix lines are properly aligned."""
+    # Lines from the issue example
+    lines = [
+        "0.953207  0.0293464       0.0196046       3.7271",
+        "0.00319424        0.974996        -0.226491       5.05835",
+        "0.00397915        0.25023 0.886231        1.27031",
+        "0 0       0       1",
+    ]
+    
+    results = [wrapper._format_matrix_line(line) for line in lines]
+    
+    # Each result should start with a space
+    for result in results:
+        assert result.startswith(" ")
+    
+    # All results should have 4 number groups separated by two spaces
+    for result in results:
+        # Strip leading space and split
+        parts = result.strip().split()
+        assert len(parts) == 4
+
+
+def test_read_stream_formats_matrices(temp_dir):
+    """Test that _read_stream formats matrix lines."""
+    mock_stream = iter([
+        "Regular output line\n",
+        "0.953207  0.0293464  0.0196046  3.7271\n",
+        "Another regular line\n",
+        "0 0 0 1\n",
+    ])
+    
+    captured_lines = []
+    
+    def capture_print(line):
+        captured_lines.append(line)
+    
+    with patch("builtins.print", side_effect=capture_print):
+        wrapper._read_stream(mock_stream, False, None)
+    
+    # Check that regular lines pass through
+    assert captured_lines[0] == "Regular output line"
+    
+    # Check that matrix lines are formatted
+    assert "0.953" in captured_lines[1]
+    assert "0.029" in captured_lines[1]
+    
+    # Check that another regular line passes through
+    assert captured_lines[2] == "Another regular line"
+    
+    # Check that the last matrix line is formatted
+    assert len(captured_lines[3].split()) == 4

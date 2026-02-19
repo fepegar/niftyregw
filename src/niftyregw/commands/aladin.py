@@ -51,15 +51,13 @@ def aladin(
     input_affine: Annotated[
         Optional[Path],
         typer.Option(
-            "--input-affine",
-            "-i",
             help="Input affine transformation filename. (Affine*Reference=Floating)",
         ),
     ] = None,
     reference_mask: Annotated[
         Optional[Path],
         typer.Option(
-            "--reference-mask", "-m", help="Mask image in the reference space."
+            help="Mask image in the reference space.",
         ),
     ] = None,
     floating_mask: Annotated[

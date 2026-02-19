@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from subprocess import PIPE, Popen
 
@@ -124,6 +125,22 @@ def reg_aladin(
         omp_threads: Number of OpenMP threads.
         verbose_off: Turn verbose off.
     """
+    # Check if the default output file exists before registration
+    default_output = Path("outputAffine.txt")
+    existed_before = default_output.exists()
+
+    # Determine if user requested the default output path
+    user_requested_default = False
+    if output_affine is not None:
+        try:
+            # Resolve both paths to absolute paths for comparison
+            user_path = Path(output_affine).resolve()
+            default_path = default_output.resolve()
+            user_requested_default = user_path == default_path
+        except (OSError, RuntimeError):
+            # If path resolution fails, treat as different paths
+            pass
+
     command_lines: list[str] = [
         f"  -ref {reference} \\",
         f"  -flo {floating} \\",
@@ -187,6 +204,18 @@ def reg_aladin(
         command_lines.append("  -voff \\")
 
     _run_with_logging("reg_aladin", *command_lines)
+
+    # Clean up the default output file if it was created and not requested
+    if not existed_before and default_output.exists() and not user_requested_default:
+        try:
+            os.remove(default_output)
+            logger.bind(executable="niftyregw").debug(
+                f"Cleaned up default output file: {default_output}"
+            )
+        except OSError as e:
+            logger.bind(executable="niftyregw").warning(
+                f"Failed to clean up {default_output}: {e}"
+            )
 
 
 def _run_with_logging(tool: str, *lines: str) -> None:

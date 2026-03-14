@@ -27,6 +27,12 @@ def install(
             help="Show the detected platform and exit without installing.",
         ),
     ] = False,
+    device: Annotated[
+        str,
+        typer.Option(
+            help="Device: cpu, gpu, cuda, cuda:<id>, or auto (detect CUDA).",
+        ),
+    ] = "auto",
     log_level: Annotated[
         LogLevel,
         typer.Option(
@@ -42,12 +48,12 @@ def install(
     install_logger = logger.bind(executable="niftyregw")
 
     if show_platform:
-        platform_name = get_platform()
+        platform_name = get_platform(device)
         install_logger.info(f"Platform: {platform_name}")
         return
 
     out_dir = output_dir if output_dir is not None else _DEFAULT_OUTPUT_DIR
-    installed = download_niftyreg(out_dir)
+    installed = download_niftyreg(out_dir, device=device)
     for path in installed:
         install_logger.info(f"  Installed {path.name} → {path}")
     install_logger.info(f"Done! {len(installed)} binaries installed.")

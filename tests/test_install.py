@@ -1,40 +1,47 @@
 """Tests for niftyregw.install module."""
 
-import platform
-import shutil
 import subprocess
-import tempfile
 import zipfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import pytest
-import requests
 
 from niftyregw import install
 
 
-def testis_cuda_available_true():
-    """Test is_cuda_available when nvidia-smi is available."""
+def testis_cuda_available_via_reg_gpuinfo():
+    """Test is_cuda_available when reg_gpuinfo succeeds."""
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = Mock(returncode=0)
-        assert install._is_cuda_available() is True
+        assert install.is_cuda_available() is True
         mock_run.assert_called_once_with(
-            ["nvidia-smi"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["reg_gpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
 
+def testis_cuda_available_via_nvidia_smi():
+    """Test is_cuda_available falls back to nvidia-smi."""
+
+    def _side_effect(cmd, **kwargs):
+        if cmd == ["reg_gpuinfo"]:
+            raise FileNotFoundError
+        return Mock(returncode=0)
+
+    with patch("subprocess.run", side_effect=_side_effect):
+        assert install.is_cuda_available() is True
+
+
 def testis_cuda_available_false():
-    """Test is_cuda_available when nvidia-smi returns non-zero."""
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value = Mock(returncode=1)
-        assert install._is_cuda_available() is False
+    """Test is_cuda_available when both commands fail."""
+    with patch("subprocess.run", return_value=Mock(returncode=1)):
+        assert install.is_cuda_available() is False
 
 
 def testis_cuda_available_not_found():
-    """Test is_cuda_available when nvidia-smi is not found."""
+    """Test is_cuda_available when neither command is found."""
     with patch("subprocess.run", side_effect=FileNotFoundError):
-        assert install._is_cuda_available() is False
+        assert install.is_cuda_available() is False
 
 
 def testget_platform_linux_no_cuda():
@@ -232,3 +239,98 @@ def test_download_niftyreg_creates_directory(temp_dir):
         result = install.download_niftyreg(out_dir)
         assert out_dir.exists()
         assert len(result) > 0
+
+
+def test_should_use_gpu_cpu():
+    """Test _should_use_gpu returns False for cpu."""
+    assert install._should_use_gpu("cpu") is False
+
+
+def test_should_use_gpu_gpu():
+    """Test _should_use_gpu returns True for gpu."""
+    assert install._should_use_gpu("gpu") is True
+
+
+def test_should_use_gpu_cuda():
+    """Test _should_use_gpu returns True for cuda."""
+    assert install._should_use_gpu("cuda") is True
+
+
+def test_should_use_gpu_cuda_with_id():
+    """Test _should_use_gpu returns True for cuda:<id>."""
+    assert install._should_use_gpu("cuda:2") is True
+
+
+def test_should_use_gpu_auto_with_cuda():
+    """Test _should_use_gpu returns True for auto when CUDA is available."""
+    with patch.object(install, "is_cuda_available", return_value=True):
+        assert install._should_use_gpu("auto") is True
+
+
+def test_should_use_gpu_auto_without_cuda():
+    """Test _should_use_gpu returns False for auto when CUDA is unavailable."""
+    with patch.object(install, "is_cuda_available", return_value=False):
+        assert install._should_use_gpu("auto") is False
+
+
+def test_parse_device_cpu():
+    """Test parse_device for cpu."""
+    use_gpu, gpu_id = install.parse_device("cpu")
+    assert use_gpu is False
+    assert gpu_id is None
+
+
+def test_parse_device_gpu():
+    """Test parse_device for gpu."""
+    use_gpu, gpu_id = install.parse_device("gpu")
+    assert use_gpu is True
+    assert gpu_id is None
+
+
+def test_parse_device_cuda():
+    """Test parse_device for cuda."""
+    use_gpu, gpu_id = install.parse_device("cuda")
+    assert use_gpu is True
+    assert gpu_id is None
+
+
+def test_parse_device_cuda_with_id():
+    """Test parse_device for cuda:<id>."""
+    use_gpu, gpu_id = install.parse_device("cuda:2")
+    assert use_gpu is True
+    assert gpu_id == 2
+
+
+def test_parse_device_cuda_with_id_zero():
+    """Test parse_device for cuda:0."""
+    use_gpu, gpu_id = install.parse_device("cuda:0")
+    assert use_gpu is True
+    assert gpu_id == 0
+
+
+def test_parse_device_auto_with_cuda():
+    """Test parse_device for auto when CUDA is available."""
+    with patch.object(install, "is_cuda_available", return_value=True):
+        use_gpu, gpu_id = install.parse_device("auto")
+        assert use_gpu is True
+        assert gpu_id is None
+
+
+def test_parse_device_auto_without_cuda():
+    """Test parse_device for auto when CUDA is unavailable."""
+    with patch.object(install, "is_cuda_available", return_value=False):
+        use_gpu, gpu_id = install.parse_device("auto")
+        assert use_gpu is False
+        assert gpu_id is None
+
+
+def test_parse_device_invalid():
+    """Test parse_device raises ValueError for invalid device."""
+    with pytest.raises(ValueError, match="Unknown device"):
+        install.parse_device("tpu")
+
+
+def test_parse_device_invalid_cuda_id():
+    """Test parse_device raises ValueError for invalid cuda id."""
+    with pytest.raises(ValueError, match="Invalid GPU id"):
+        install.parse_device("cuda:abc")

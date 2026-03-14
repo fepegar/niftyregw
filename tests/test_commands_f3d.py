@@ -304,7 +304,8 @@ def test_f3d_keeps_default_file_if_requested(mock_nifti_image, temp_dir):
         app = typer.Typer()
         app.command()(f3d)
         result = runner.invoke(
-            app, ["-r", str(ref_img), "-f", str(flo_img), "--output-cpp", str(default_file)]
+            app,
+            ["-r", str(ref_img), "-f", str(flo_img), "--output-cpp", str(default_file)],
         )
 
         assert result.exit_code == 0
@@ -339,3 +340,83 @@ def test_f3d_handles_existing_default_file(mock_nifti_image, temp_dir):
 
     # Clean up
     default_file.unlink()
+
+
+def test_f3d_with_device_gpu(mock_nifti_image, temp_dir):
+    """Test f3d passes -platf 1 flag when device=gpu."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    with (
+        patch("niftyregw.commands.f3d.setup_logger"),
+        patch("niftyregw.commands.f3d.run") as mock_run,
+        patch("niftyregw.commands.f3d.parse_device", return_value=(True, None)),
+    ):
+        app = typer.Typer()
+        app.command()(f3d)
+        result = runner.invoke(
+            app, ["-r", str(ref_img), "-f", str(flo_img), "--device", "gpu"]
+        )
+
+        assert result.exit_code == 0
+        call_args = mock_run.call_args[0]
+        args_str = " ".join(str(a) for a in call_args)
+        assert "-platf" in args_str
+
+
+def test_f3d_with_device_cpu(mock_nifti_image, temp_dir):
+    """Test f3d does not pass -platf flag when device=cpu."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    with (
+        patch("niftyregw.commands.f3d.setup_logger"),
+        patch("niftyregw.commands.f3d.run") as mock_run,
+        patch("niftyregw.commands.f3d.parse_device", return_value=(False, None)),
+    ):
+        app = typer.Typer()
+        app.command()(f3d)
+        result = runner.invoke(
+            app, ["-r", str(ref_img), "-f", str(flo_img), "--device", "cpu"]
+        )
+
+        assert result.exit_code == 0
+        call_args = mock_run.call_args[0]
+        args_str = " ".join(str(a) for a in call_args)
+        assert "-platf" not in args_str
+
+
+def test_f3d_with_device_cuda_id(mock_nifti_image, temp_dir):
+    """Test f3d passes -platf 1 and -gpuid when device=cuda:2."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    with (
+        patch("niftyregw.commands.f3d.setup_logger"),
+        patch("niftyregw.commands.f3d.run") as mock_run,
+        patch("niftyregw.commands.f3d.parse_device", return_value=(True, 2)),
+    ):
+        app = typer.Typer()
+        app.command()(f3d)
+        result = runner.invoke(
+            app, ["-r", str(ref_img), "-f", str(flo_img), "--device", "cuda:2"]
+        )
+
+        assert result.exit_code == 0
+        call_args = mock_run.call_args[0]
+        args_str = " ".join(str(a) for a in call_args)
+        assert "-platf" in args_str
+        assert "-gpuid" in args_str
+        assert "2" in args_str
+
+
+def test_f3d_device_default():
+    """Test f3d uses 'auto' device by default."""
+    import inspect
+
+    sig = inspect.signature(f3d)
+    device_param = sig.parameters["device"]
+    assert device_param.default == "auto"

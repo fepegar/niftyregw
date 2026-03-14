@@ -8,6 +8,7 @@ from loguru import logger
 
 from niftyregw.commands import make_help_callback, make_version_callback, setup_logger
 from niftyregw.enums import LogLevel
+from niftyregw.install import parse_device
 from niftyregw.wrapper import run
 
 _help_callback = make_help_callback("reg_f3d")
@@ -196,6 +197,12 @@ def f3d(
     omp_threads: Annotated[
         Optional[int], typer.Option(help="Number of threads to use with OpenMP.")
     ] = None,
+    device: Annotated[
+        str,
+        typer.Option(
+            help="Device: cpu, gpu, cuda, cuda:<id>, or auto (detect CUDA).",
+        ),
+    ] = "auto",
     version: Annotated[
         bool,
         typer.Option(
@@ -347,6 +354,12 @@ def f3d(
         args.append("-voff")
     if omp_threads is not None:
         args.extend(["-omp", str(omp_threads)])
+
+    use_gpu, gpu_id = parse_device(device)
+    if use_gpu:
+        args.extend(["-platf", "1"])
+        if gpu_id is not None:
+            args.extend(["-gpuid", str(gpu_id)])
 
     run("reg_f3d", *args, tool_logger=tool_logger)
 

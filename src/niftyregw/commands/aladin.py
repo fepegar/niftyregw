@@ -172,6 +172,12 @@ def aladin(
         Optional[int], typer.Option(help="Number of threads to use with OpenMP.")
     ] = None,
     verbose_off: Annotated[bool, typer.Option(help="Turn verbose off.")] = False,
+    device: Annotated[
+        str,
+        typer.Option(
+            help="Device: cpu, gpu, cuda, cuda:<id>, or auto (detect CUDA).",
+        ),
+    ] = "auto",
     version: Annotated[
         bool,
         typer.Option(
@@ -235,4 +241,5 @@ def aladin(
         block_step_size_2=block_step_size_2,
         omp_threads=omp_threads,
         verbose_off=verbose_off,
+        device=device,
     )

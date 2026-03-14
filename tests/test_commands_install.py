@@ -44,7 +44,7 @@ def test_install_custom_output_dir(temp_dir):
         result = runner.invoke(app, ["--output-dir", str(custom_dir)])
 
         assert result.exit_code == 0
-        mock_download.assert_called_once_with(custom_dir)
+        mock_download.assert_called_once_with(custom_dir, device="auto")
 
 
 def test_install_short_option(temp_dir):
@@ -62,7 +62,7 @@ def test_install_short_option(temp_dir):
         result = runner.invoke(app, ["-o", str(custom_dir)])
 
         assert result.exit_code == 0
-        mock_download.assert_called_once_with(custom_dir)
+        mock_download.assert_called_once_with(custom_dir, device="auto")
 
 
 def test_install_displays_installed_binaries(temp_dir):
@@ -102,3 +102,55 @@ def test_install_help():
 
     assert result.exit_code == 0
     assert "install" in result.stdout.lower() or "download" in result.stdout.lower()
+
+
+def test_install_with_device_gpu(temp_dir):
+    """Test install with --device gpu."""
+    custom_dir = temp_dir / "custom"
+
+    with (
+        patch("niftyregw.commands.install.download_niftyreg") as mock_download,
+        patch("niftyregw.commands.install.setup_logger"),
+    ):
+        mock_download.return_value = [custom_dir / "reg_aladin"]
+
+        app = typer.Typer()
+        app.command()(install)
+        result = runner.invoke(app, ["-o", str(custom_dir), "--device", "gpu"])
+
+        assert result.exit_code == 0
+        mock_download.assert_called_once_with(custom_dir, device="gpu")
+
+
+def test_install_with_device_cpu(temp_dir):
+    """Test install with --device cpu."""
+    custom_dir = temp_dir / "custom"
+
+    with (
+        patch("niftyregw.commands.install.download_niftyreg") as mock_download,
+        patch("niftyregw.commands.install.setup_logger"),
+    ):
+        mock_download.return_value = [custom_dir / "reg_aladin"]
+
+        app = typer.Typer()
+        app.command()(install)
+        result = runner.invoke(app, ["-o", str(custom_dir), "--device", "cpu"])
+
+        assert result.exit_code == 0
+        mock_download.assert_called_once_with(custom_dir, device="cpu")
+
+
+def test_install_platform_with_device(temp_dir):
+    """Test install --platform respects --device."""
+    with (
+        patch("niftyregw.commands.install.setup_logger"),
+        patch(
+            "niftyregw.commands.install.get_platform", return_value="Ubuntu-CUDA"
+        ) as mock_gp,
+    ):
+        app = typer.Typer()
+        app.command()(install)
+        result = runner.invoke(app, ["--platform", "--device", "gpu"])
+
+        assert result.exit_code == 0
+        mock_gp.assert_called_once_with("gpu")

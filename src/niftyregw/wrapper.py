@@ -10,7 +10,7 @@ from typing import TextIO
 import loguru
 from loguru import logger
 
-from .install import find as _find
+from .install import parse_device, find as _find
 
 # Matrix formatting constants
 _MATRIX_COLUMN_COUNT = 4
@@ -173,6 +173,7 @@ def reg_aladin(
     block_step_size_2: bool = False,
     omp_threads: int | None = None,
     verbose_off: bool = False,
+    device: str = "auto",
 ) -> None:
     """Run reg_aladin with structured arguments.
 
@@ -207,6 +208,10 @@ def reg_aladin(
         block_step_size_2: Use block step size of 2 for faster registration.
         omp_threads: Number of OpenMP threads.
         verbose_off: Turn verbose off.
+        device: ``"cpu"``, ``"gpu"``, ``"cuda"``, ``"cuda:<id>"`` or
+            ``"auto"`` (default).  When GPU is selected, ``-platf 1``
+            is passed to the binary.  ``"cuda:<id>"`` additionally
+            passes ``-gpuid <id>``.
     """
     # Check if the default output file exists before registration
     default_output = Path("outputAffine.txt")
@@ -285,6 +290,11 @@ def reg_aladin(
         command_lines.append(f"  -omp {omp_threads} \\")
     if verbose_off:
         command_lines.append("  -voff \\")
+    use_gpu, gpu_id = parse_device(device)
+    if use_gpu:
+        command_lines.append("  -platf 1 \\")
+        if gpu_id is not None:
+            command_lines.append(f"  -gpuid {gpu_id} \\")
 
     _run_with_logging("reg_aladin", *command_lines)
 

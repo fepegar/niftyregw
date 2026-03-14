@@ -11,57 +11,122 @@ from loguru import logger
 _GITHUB_URL = "https://github.com/KCL-BMEIS/niftyreg/releases/download/v2.0.0/NiftyReg-{name}-v2.0.0.zip"
 
 
-def _is_cuda_available():
-    try:
-        result = subprocess.run(
-            ["nvidia-smi"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        return result.returncode == 0
-    except FileNotFoundError:
+def is_cuda_available() -> bool:
+    """Check whether CUDA is usable by the installed NiftyReg binaries.
+
+    Tries ``reg_gpuinfo`` first (shipped with CUDA-enabled NiftyReg builds).
+    Falls back to ``nvidia-smi`` when ``reg_gpuinfo`` is not installed yet
+    (e.g. before ``niftyregw install``).
+    """
+    for cmd in (["reg_gpuinfo"], ["nvidia-smi"]):
+        try:
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if result.returncode == 0:
+                return True
+        except FileNotFoundError:
+            continue
+    return False
+
+
+def _should_use_gpu(device: str) -> bool:
+    """Decide whether to enable GPU based on the *device* string.
+
+    Args:
+        device: ``"cpu"``, ``"gpu"``, ``"cuda"``, ``"cuda:<id>"`` or
+            ``"auto"``.
+
+    Returns:
+        ``True`` when GPU should be used.
+    """
+    if device == "cpu":
         return False
+    if device in ("gpu", "cuda") or device.startswith("cuda:"):
+        return True
+    return is_cuda_available()
 
 
-def get_platform():
+def parse_device(device: str) -> tuple[bool, int | None]:
+    """Parse a device string into GPU flag and optional GPU id.
+
+    Args:
+        device: ``"cpu"``, ``"gpu"``, ``"cuda"``, ``"cuda:<id>"`` or
+            ``"auto"``.
+
+    Returns:
+        A ``(use_gpu, gpu_id)`` tuple.  *gpu_id* is ``None`` unless the
+        caller specified ``"cuda:<id>"``.
+
+    Raises:
+        ValueError: If the device string is not recognised.
+    """
+    device = device.strip().lower()
+    if device == "cpu":
+        return False, None
+    if device in ("gpu", "cuda"):
+        return True, None
+    if device.startswith("cuda:"):
+        try:
+            gpu_id = int(device.split(":", 1)[1])
+        except ValueError:
+            msg = f"Invalid GPU id in device string: {device!r}"
+            raise ValueError(msg) from None
+        return True, gpu_id
+    if device == "auto":
+        return is_cuda_available(), None
+    msg = f"Unknown device: {device!r}. Use cpu, gpu, cuda, cuda:<id> or auto."
+    raise ValueError(msg)
+
+
+def get_platform(device: str = "auto") -> str:
     """Get the detected platform name for NiftyReg binary selection.
+
+    Args:
+        device: ``"cpu"``, ``"gpu"`` or ``"auto"`` (default).  When
+            ``"cpu"`` the CUDA variant is never selected; when ``"gpu"``
+            the CUDA variant is always selected (on supported OSes).
 
     Returns:
         Platform name string, one of: "Ubuntu", "Ubuntu-CUDA", "macOS",
         "macOS-Intel", "Windows", or "Windows-CUDA".
     """
     system = platform.system()
-    has_cuda = _is_cuda_available()
+    use_gpu = _should_use_gpu(device)
     match system:
         case "Linux":
-            platform_name = "Ubuntu-CUDA" if has_cuda else "Ubuntu"
+            platform_name = "Ubuntu-CUDA" if use_gpu else "Ubuntu"
         case "Darwin":
             is_intel = platform.processor() == "i386" or platform.processor() == "i686"
             platform_name = "macOS-Intel" if is_intel else "macOS"
         case "Windows":
-            platform_name = "Windows-CUDA" if has_cuda else "Windows"
+            platform_name = "Windows-CUDA" if use_gpu else "Windows"
         case _:
             raise Exception(f"Unsupported platform: {system}")
     return platform_name
 
 
-def _get_download_url():
-    platform_name = get_platform()
+def _get_download_url(device: str = "auto") -> str:
+    platform_name = get_platform(device)
     return _GITHUB_URL.format(name=platform_name)
 
 
 _DEFAULT_OUTPUT_DIR = Path.home() / ".local" / "bin"
 
 
-def download_niftyreg(out_dir: Path = _DEFAULT_OUTPUT_DIR) -> list[Path]:
+def download_niftyreg(
+    out_dir: Path = _DEFAULT_OUTPUT_DIR,
+    device: str = "auto",
+) -> list[Path]:
     """Download NiftyReg binaries and install them to *out_dir*.
 
     Args:
         out_dir: Directory where the binaries will be placed.
             Defaults to ``~/.local/bin``.
+        device: ``"cpu"``, ``"gpu"`` or ``"auto"`` (default).
 
     Returns:
         List of paths to the installed binaries.
     """
-    url = _get_download_url()
+    url = _get_download_url(device)
     download_logger = logger.bind(executable="niftyregw")
     download_logger.info(f"Downloading from {url}")
     response = requests.get(url)

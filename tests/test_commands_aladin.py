@@ -1,6 +1,5 @@
 """Tests for niftyregw.commands.aladin module."""
 
-from pathlib import Path
 from unittest.mock import patch
 
 import typer
@@ -232,3 +231,75 @@ def test_aladin_log_level_default():
     sig = inspect.signature(aladin)
     log_level_param = sig.parameters["log_level"]
     assert log_level_param.default == LogLevel.DEBUG
+
+
+def test_aladin_device_default():
+    """Test aladin uses 'auto' device by default."""
+    import inspect
+
+    sig = inspect.signature(aladin)
+    device_param = sig.parameters["device"]
+    assert device_param.default == "auto"
+
+
+def test_aladin_with_device_gpu(mock_nifti_image, temp_dir):
+    """Test aladin passes device=gpu to wrapper."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    with (
+        patch("niftyregw.commands.aladin.setup_logger"),
+        patch("niftyregw.commands.aladin._reg_aladin") as mock_reg_aladin,
+    ):
+        app = typer.Typer()
+        app.command()(aladin)
+        result = runner.invoke(
+            app, ["-r", str(ref_img), "-f", str(flo_img), "--device", "gpu"]
+        )
+
+        assert result.exit_code == 0
+        call_kwargs = mock_reg_aladin.call_args[1]
+        assert call_kwargs["device"] == "gpu"
+
+
+def test_aladin_with_device_cpu(mock_nifti_image, temp_dir):
+    """Test aladin passes device=cpu to wrapper."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    with (
+        patch("niftyregw.commands.aladin.setup_logger"),
+        patch("niftyregw.commands.aladin._reg_aladin") as mock_reg_aladin,
+    ):
+        app = typer.Typer()
+        app.command()(aladin)
+        result = runner.invoke(
+            app, ["-r", str(ref_img), "-f", str(flo_img), "--device", "cpu"]
+        )
+
+        assert result.exit_code == 0
+        call_kwargs = mock_reg_aladin.call_args[1]
+        assert call_kwargs["device"] == "cpu"
+
+
+def test_aladin_with_device_cuda_id(mock_nifti_image, temp_dir):
+    """Test aladin passes device=cuda:2 to wrapper."""
+    ref_img = mock_nifti_image
+    flo_img = temp_dir / "flo.nii.gz"
+    flo_img.touch()
+
+    with (
+        patch("niftyregw.commands.aladin.setup_logger"),
+        patch("niftyregw.commands.aladin._reg_aladin") as mock_reg_aladin,
+    ):
+        app = typer.Typer()
+        app.command()(aladin)
+        result = runner.invoke(
+            app, ["-r", str(ref_img), "-f", str(flo_img), "--device", "cuda:2"]
+        )
+
+        assert result.exit_code == 0
+        call_kwargs = mock_reg_aladin.call_args[1]
+        assert call_kwargs["device"] == "cuda:2"
